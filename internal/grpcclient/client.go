@@ -3,6 +3,7 @@ package grpcclient
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -14,18 +15,18 @@ import (
 func ProcessFile(host string, filePath string) (map[string]interface{}, error) {
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, fmt.Errorf("error conectando al host %s: %v", host, err)
+		return nil, err
 	}
 	defer conn.Close()
 
 	client := pb.NewFileProcessorClient(conn)
-
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 360*time.Second)
+	defer cancel()
 
 	req := &pb.FileRequest{FilePath: filePath}
 	res, err := client.ProcessFile(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("error en llamada gRPC a ProcessFile: %v", err)
+		return nil, err
 	}
 
 	if res.Data != nil {
@@ -35,58 +36,27 @@ func ProcessFile(host string, filePath string) (map[string]interface{}, error) {
 	return nil, nil
 }
 
-func ProcessSimplificados(host string, reqData map[string]interface{}) (map[string]interface{}, error) {
+func ProcessDynamicModule(host string, fullMethodName string, reqData map[string]interface{}) (map[string]interface{}, error) {
 	reqStruct, err := structpb.NewStruct(reqData)
 	if err != nil {
-		return nil, fmt.Errorf("error convirtiendo datos a Struct para Simplificados: %v", err)
+		return nil, fmt.Errorf("error serialización: %v", err)
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, fmt.Errorf("error conectando al host de Simplificados %s: %v", host, err)
+		return nil, err
 	}
 	defer conn.Close()
 
-	client := pb.NewSIMPLIFICADOSClient(conn)
+	outStruct := new(structpb.Struct)
 
-	ctx := context.Background()
-
-	res, err := client.SIMPLIFICADOS(ctx, reqStruct)
+	err = conn.Invoke(ctx, fullMethodName, reqStruct, outStruct)
 	if err != nil {
-		return nil, fmt.Errorf("error en llamada gRPC a Simplificados: %v", err)
+		return nil, err
 	}
 
-	if res != nil {
-		return res.AsMap(), nil
-	}
-
-	return nil, nil
-}
-
-func ProcessFracciones(host string, reqData map[string]interface{}) (map[string]interface{}, error) {
-	reqStruct, err := structpb.NewStruct(reqData)
-	if err != nil {
-		return nil, fmt.Errorf("error convirtiendo datos a Struct para Fracciones: %v", err)
-	}
-
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("error conectando al host de Fracciones %s: %v", host, err)
-	}
-	defer conn.Close()
-
-	client := pb.NewFraccionesServiceClient(conn)
-
-	ctx := context.Background()
-
-	res, err := client.Fracciones(ctx, reqStruct)
-	if err != nil {
-		return nil, fmt.Errorf("error en llamada gRPC a Fracciones: %v", err)
-	}
-
-	if res != nil {
-		return res.AsMap(), nil
-	}
-
-	return nil, nil
+	return outStruct.AsMap(), nil
 }
