@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package apigrpc;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "./pb";
+
+service FraccionesService {
+  rpc Fracciones(google.protobuf.Struct) returns (google.protobuf.Struct);
+}

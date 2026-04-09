@@ -1,0 +1,14 @@
+# Binarios de Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Entornos de desarrollo y editores (como Zed, VSCode, etc.)
+.idea/
+.vscode/
+*.swp
+.DS_Store

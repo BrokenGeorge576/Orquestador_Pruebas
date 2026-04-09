@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+option go_package = "./pb";
+
+service FileProcessor {
+  rpc ProcessFile(FileRequest) returns (FileResponse);
+}
+
+message FileRequest {
+  string file_path = 1;
+}
+
+message FileResponse {
+  google.protobuf.Struct data = 1;
+}
