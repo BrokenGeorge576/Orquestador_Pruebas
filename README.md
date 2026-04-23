@@ -1,6 +1,6 @@
 # Orquestador para pruebas 
 
-Este proyecto es un orquestador construido en Go diseñado para procesar archivos de forma concurrente utilizando microservicios gRPC.
+Este codigo es un orquestador construido en Go diseñado para procesar archivos de forma concurrente utilizando microservicios gRPC.
 Su arquitectura está basada en datos (data-driven), lo que permite escalar y agregar nuevos módulos de procesamiento sin necesidad de 
 modificar la lógica central del cliente gRPC.
 
@@ -33,7 +33,7 @@ Para ejecutar este código en cualquier máquina, necesitas tener instalado:
 
 ---
 
-## 📦 Gestión de Archivos Protobuf (`.proto`)
+## Gestión de Archivos Protobuf (`.proto`)
 
 Todos los contratos de los microservicios deben colocarse en la carpeta `proto/`. 
 
@@ -46,7 +46,6 @@ option go_package = "./pb";
 ```
 
 Esto le indica al compilador que los archivos generados en Go (`.pb.go` y `_grpc.pb.go`) deben guardarse exclusivamente en la carpeta `pb/` del proyecto. 
-¡No modifiques esta ruta a menos que cambies la estructura completa del repositorio!
 
 ### Cómo compilar un nuevo servicio Protobuf:
 Cuando agregues o modifiques un archivo `.proto` en la carpeta `proto/`, abre tu terminal en la **raíz del proyecto** y ejecuta el siguiente comando:
@@ -60,14 +59,14 @@ protoc --go_out=. --go-grpc_out=. proto/nombre_del_archivo.proto
 
 ## ⚙️ Cómo Agregar o Quitar Servicios al Orquestador
 
-Una de las mayores ventajas de este orquestador es que **no necesitas modificar el cliente gRPC (`internal/grpcclient/client.go`) para agregar nuevos microservicios**. 
+Una de las mayores ventajas de este orquestador para pruebas es que **no necesitas modificar el cliente gRPC (`internal/grpcclient/client.go`) para agregar nuevos microservicios**. 
 
 Toda la configuración se maneja en el archivo `cmd/orquestador/main.go`.
 
-### Flujo Base (No se toca)
-El primer servicio que se ejecuta es `Sintáctica`. Este servicio es crítico y extrae el "Documento" base. Su ejecución está separada y ocurre antes del procesamiento en paralelo.
+### Flujo Base 
+El primer servicio que se ejecuta es `ProcessRestSintactica`. Este servicio es crítico y extrae el "Documento" base. Su ejecución está separada y ocurre antes del procesamiento en paralelo.
 
-### Agregar nuevos módulos (Procesamiento Paralelo)
+### Agregar nuevos módulos
 Para conectar un nuevo servicio, solo debes agregar una nueva entrada al arreglo `modulos` dentro de `main.go`. 
 
 Utiliza la estructura `ModuleConfig`:
