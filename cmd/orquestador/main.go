@@ -17,11 +17,11 @@ type ModuleConfig struct {
 
 func main() {
 	urlSintactico := "https://prevalidador.appsrvr.dev/validacion-sintactica"
-	archivo := "D:/Archivosm/m3438540.095"
-	fmt.Printf("Conectando a Sintáctica vía REST (%s)...\n", urlSintactico)
+	archivo := "/mnt/c/Users/DesarrolloGUAS/Documents/ArchivosM/m1698175.267"
+	fmt.Printf("Conectando a Sintáctica (%s)...\n", urlSintactico)
 	resultadoSintactica, err := grpcclient.ProcessRestSintactica(urlSintactico, archivo)
 	if err != nil {
-		log.Fatalf("Fallo crítico en Sintáctica REST: %v\n", err)
+		log.Fatalf("Fallo crítico en Sintáctica: %v\n", err)
 	}
 
 	resultadoArr, ok := resultadoSintactica["Resultado"].([]interface{})
@@ -46,18 +46,13 @@ func main() {
 			Host:       "localhost:50053",
 			MethodName: "/apigrpc.FraccionesService/Fracciones",
 		},
-		{
-			Name:       "IVA",
-			Host:       "localhost:50054",
-			MethodName: "/apigrpc.IvaService/Iva",
-		},
 	}
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
 	resultadosFinales := make(map[string]interface{})
-	resultadosFinales["Sintactica"] = resultadoSintactica
+	// resultadosFinales["Sintactica"] = resultadoSintactica
 
 	fmt.Println("Iniciando procesamiento de módulos gRPC")
 
@@ -84,7 +79,7 @@ func main() {
 	}
 
 	wg.Wait()
-	fmt.Println("Procesamiento paralelo \n")
+	fmt.Println("Procesamiento \n")
 
 	jsonResFinal, err := json.MarshalIndent(resultadosFinales, "", "  ")
 	if err != nil {
