@@ -40,6 +40,18 @@ func main() {
 	}
 
 	fmt.Println("[OK] Documento base extraído con éxito vía REST.\n")
+
+	urlLegacy := "https://prevalidador-api.appsrvr.dev/nor-contribucion"
+	fmt.Printf("Consultando para datos extra (%s)...\n", urlLegacy)
+
+	datosTCambio, err := grpcclient.ProcessLegacyTCambio(urlLegacy, archivo)
+	if err != nil {
+		log.Fatalf("Fallo crítico obteniendo TCambio: %v\n", err)
+	}
+
+	documento["TCambio"] = datosTCambio
+	fmt.Println("[OK] Datos extras anexados exitosamente.\n")
+
 	modulos := []ModuleConfig{
 		{
 			Name:       "Fracciones",
