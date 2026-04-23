@@ -52,6 +52,15 @@ func main() {
 	documento["TCambio"] = datosTCambio
 	fmt.Println("[OK] Datos extras anexados exitosamente.\n")
 
+	docEnriquecidoJSON, err := json.MarshalIndent(documento, "", "  ")
+	if err != nil {
+		fmt.Printf("[ADVERTENCIA] No se pudo imprimir el documento: %v\n", err)
+	} else {
+		fmt.Println("=== INICIO DEL PEDIMENTO ===")
+		fmt.Println(string(docEnriquecidoJSON))
+		fmt.Println("=== FIN DEL DOCUMENTO PEDIMENTO ===\n")
+	}
+
 	modulos := []ModuleConfig{
 		{
 			Name:       "Fracciones",
