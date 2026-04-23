@@ -16,22 +16,15 @@ type ModuleConfig struct {
 }
 
 func main() {
-	hostSintactica := "192.168.1.178:50051"
+	urlSintactico := "https://prevalidador.appsrvr.dev/validacion-sintactica"
 	archivo := "D:/Archivosm/m3438540.095"
-
-	fmt.Printf("Conectando a Sintáctica (%s)...\n", hostSintactica)
-
-	resultadoSintactica, err := grpcclient.ProcessFile(hostSintactica, archivo)
+	fmt.Printf("Conectando a Sintáctica vía REST (%s)...\n", urlSintactico)
+	resultadoSintactica, err := grpcclient.ProcessRestSintactica(urlSintactico, archivo)
 	if err != nil {
-		log.Fatalf("Fallo crítico en Sintáctica: %v\n", err)
+		log.Fatalf("Fallo crítico en Sintáctica REST: %v\n", err)
 	}
 
-	dataNode, ok := resultadoSintactica["data"].(map[string]interface{})
-	if !ok {
-		dataNode = resultadoSintactica
-	}
-
-	resultadoArr, ok := dataNode["Resultado"].([]interface{})
+	resultadoArr, ok := resultadoSintactica["Resultado"].([]interface{})
 	if !ok || len(resultadoArr) == 0 {
 		log.Fatalf("Error: No se encontró 'Resultado' o está vacío en la respuesta de Sintáctica.\n")
 	}
@@ -46,22 +39,16 @@ func main() {
 		log.Fatalf("Error: No se encontró 'Documento' o no es un objeto válido.\n")
 	}
 
-	fmt.Println("[OK] Documento base extraído con éxito.\n")
-
+	fmt.Println("[OK] Documento base extraído con éxito vía REST.\n")
 	modulos := []ModuleConfig{
 		{
-			Name:       "Simplificados",
-			Host:       "192.168.1.178:50052",
-			MethodName: "/apigrpc.SIMPLIFICADOS/SIMPLIFICADOS",
-		},
-		{
 			Name:       "Fracciones",
-			Host:       "192.168.1.178:50053",
+			Host:       "localhost:50053",
 			MethodName: "/apigrpc.FraccionesService/Fracciones",
 		},
 		{
 			Name:       "IVA",
-			Host:       "192.168.1.178:50054",
+			Host:       "localhost:50054",
 			MethodName: "/apigrpc.IvaService/Iva",
 		},
 	}
@@ -72,7 +59,7 @@ func main() {
 	resultadosFinales := make(map[string]interface{})
 	resultadosFinales["Sintactica"] = resultadoSintactica
 
-	fmt.Println("Iniciando procesamiento de módulos")
+	fmt.Println("Iniciando procesamiento de módulos gRPC")
 
 	for _, mod := range modulos {
 		wg.Add(1)
@@ -97,13 +84,13 @@ func main() {
 	}
 
 	wg.Wait()
-	fmt.Println("Procesamiento paralelo finalizado\n")
+	fmt.Println("Procesamiento paralelo \n")
 
 	jsonResFinal, err := json.MarshalIndent(resultadosFinales, "", "  ")
 	if err != nil {
 		log.Fatalf("Error al serializar el resultado final: %v\n", err)
 	}
 
-	fmt.Println(" RESPUESTA FINAL ")
+	fmt.Println("=== RESPUESTA FINAL DEL ORQUESTADOR HÍBRIDO ===")
 	fmt.Println(string(jsonResFinal))
 }
