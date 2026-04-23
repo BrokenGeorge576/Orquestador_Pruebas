@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -152,10 +153,25 @@ func ProcessLegacyTCambio(targetUrl string, filePath string) (map[string]interfa
 	for _, e := range estados {
 		estadoMap, ok := e.(map[string]interface{})
 		if ok && estadoMap["id"] == "tcambio" {
+
+			tcambioStr, _ := estadoMap["tcambio"].(string)
+			fAplicaStr, _ := estadoMap["f_aplica"].(string)
+			factorStr, _ := estadoMap["factor"].(string)
+
+			tcambioFloat, err := strconv.ParseFloat(tcambioStr, 64)
+			if err != nil {
+				return nil, fmt.Errorf("error convirtiendo TipoCambio a float: %v", err)
+			}
+
+			factorInt, err := strconv.Atoi(factorStr)
+			if err != nil {
+				return nil, fmt.Errorf("error convirtiendo Factor a int: %v", err)
+			}
+
 			nuevoTCambio := map[string]interface{}{
-				"TipoCambio": estadoMap["tcambio"],
-				"FAplica":    estadoMap["f_aplica"],
-				"Factor":     estadoMap["factor"],
+				"TipoCambio": tcambioFloat,
+				"FAplica":    fAplicaStr,
+				"Factor":     factorInt,
 			}
 			return nuevoTCambio, nil
 		}
