@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orquestador</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141416;
+    --surface2: #1c1c1f;
+    --border: #272729;
+    --accent: #00e676;
+    --accent-dim: #00c85a;
+    --text: #d4d4d8;
+    --muted: #52525b;
+    --error: #f87171;
+    --ped-color: #7dd3fc;
+    --font-mono: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    --header-h: 48px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ─────────────────────────────────────── */
+  #header {
+    height: var(--header-h);
+    min-height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+
+  #brand {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  #sep { width: 1px; height: 20px; background: var(--border); }
+
+  /* File picker */
+  #file-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s;
+    min-width: 220px;
+    max-width: 320px;
+    overflow: hidden;
+  }
+  #file-label:hover { border-color: var(--accent); }
+  #file-label .icon { color: var(--muted); flex-shrink: 0; }
+  #file-label .fname {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  #file-label .fname.selected { color: var(--text); }
+  #file-input { display: none; }
+
+  #run-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  #run-btn:hover:not(:disabled) { background: var(--accent-dim); }
+  #run-btn:disabled { background: var(--muted); color: #888; cursor: not-allowed; }
+
+  #clear-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  #clear-btn:hover { color: var(--text); border-color: var(--muted); }
+
+  .spacer { flex: 1; }
+
+  #status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  #status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  #status-dot.running { background: var(--accent); animation: blink 1.2s ease-in-out infinite; }
+  #status-dot.done    { background: var(--accent); animation: none; }
+  #status-dot.error   { background: var(--error); animation: none; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  #status-text { max-width: 340px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── Log strip ──────────────────────────────────── */
+  #log-strip {
+    height: 80px;
+    min-height: 80px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  #log-strip .panel-header { padding: 4px 12px; }
+
+  #log-output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  #log-output::-webkit-scrollbar { width: 4px; }
+  #log-output::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .log-line { color: var(--muted); }
+  .log-line.log-err { color: var(--error); }
+  .log-line.log-ok { color: var(--accent); }
+
+  /* ── Grid ───────────────────────────────────────── */
+  #grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 3fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .panel {
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* Top row — auto-placed: Sintáctico col1, Simplificados col2, Pedimento col3 */
+  /* Bottom row — small strip */
+  #panel-norcontrib { grid-column: 1;     grid-row: 2; }
+  #panel-dta        { grid-column: 2 / 4; grid-row: 2; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    flex-shrink: 0;
+  }
+
+  .panel-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .panel-count {
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--border);
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.55;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .panel-body::-webkit-scrollbar { width: 5px; }
+  .panel-body::-webkit-scrollbar-track { background: transparent; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Panel content ─────────────────────────────── */
+  .entry {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+  }
+  .entry:last-child { border-bottom: none; }
+
+  .ped-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--ped-color);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ped-label::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ped-color);
+  }
+
+  .json-pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text);
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .entry-error .json-pre { color: var(--error); }
+</style>
+</head>
+<body>
+
+<header id="header">
+  <span id="brand">Orquestador</span>
+  <div id="sep"></div>
+
+  <label id="file-label" for="file-input">
+    <span class="icon">📄</span>
+    <span class="fname" id="file-name">Seleccionar archivo...</span>
+  </label>
+  <input type="file" id="file-input">
+
+  <button id="run-btn" disabled>▶ Ejecutar</button>
+  <button id="clear-btn">Limpiar</button>
+  <div class="spacer"></div>
+  <div id="status-wrap">
+    <div id="status-dot"></div>
+    <span id="status-text">Listo</span>
+  </div>
+</header>
+
+<main id="grid">
+  <!-- Fila 1 (grande) -->
+  <section class="panel" id="panel-sintactica">
+    <div class="panel-header">
+      <span class="panel-title">Sintáctico</span>
+      <span class="panel-count" id="cnt-sintactica">0</span>
+    </div>
+    <div class="panel-body" id="out-sintactica">
+      <div class="empty-state">Sin datos</div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-simplificados">
+    <div class="panel-header">
+      <span class="panel-title">Simplificados</span>
+      <span class="panel-count" id="cnt-simplificados">0</span>
+    </div>
+    <div class="panel-body" id="out-simplificados">
+      <div class="empty-state">Sin datos</div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-pedimento">
+    <div class="panel-header">
+      <span class="panel-title">Pedimento</span>
+      <span class="panel-count" id="cnt-pedimento">0</span>
+    </div>
+    <div class="panel-body" id="out-pedimento">
+      <div class="empty-state">Sin datos</div>
+    </div>
+  </section>
+
+  <!-- Fila 2 (pequeña) -->
+  <section class="panel" id="panel-norcontrib">
+    <div class="panel-header">
+      <span class="panel-title">NorContribuciones</span>
+      <span class="panel-count" id="cnt-norcontrib">0</span>
+    </div>
+    <div class="panel-body" id="out-norcontrib">
+      <div class="empty-state">Sin datos</div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-dta">
+    <div class="panel-header">
+      <span class="panel-title">DTA / TCambio</span>
+      <span class="panel-count" id="cnt-dta">0</span>
+    </div>
+    <div class="panel-body" id="out-dta">
+      <div class="empty-state">Sin datos</div>
+    </div>
+  </section>
+</main>
+
+<div id="log-strip">
+  <div class="panel-header">
+    <span class="panel-title">Bitácora</span>
+    <span class="panel-count" id="cnt-log">0</span>
+  </div>
+  <div id="log-output"></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const fileInput  = $('file-input');
+  const fileName   = $('file-name');
+  const runBtn     = $('run-btn');
+  const clearBtn   = $('clear-btn');
+  const statusDot  = $('status-dot');
+  const statusText = $('status-text');
+  const logOutput  = $('log-output');
+  const cntLog     = $('cnt-log');
+
+  const panels = {
+    sintactica:    { body: $('out-sintactica'),    count: $('cnt-sintactica'),    n: 0 },
+    simplificados: { body: $('out-simplificados'), count: $('cnt-simplificados'), n: 0 },
+    pedimento:     { body: $('out-pedimento'),      count: $('cnt-pedimento'),      n: 0 },
+    norcontrib:    { body: $('out-norcontrib'),     count: $('cnt-norcontrib'),     n: 0 },
+    dta:           { body: $('out-dta'),            count: $('cnt-dta'),            n: 0 },
+  };
+
+  let currentSSE  = null;
+  let selectedFile = null;
+  let hadError    = false;
+  let logCount    = 0;
+
+  // ── Helpers ───────────────────────────────────────
+  function setStatus(text, state) {
+    statusText.textContent = text;
+    statusDot.className = state || '';
+  }
+
+  function addLog(text) {
+    const isErr = text.startsWith('ERROR');
+    const isOk  = text.startsWith('[OK]');
+    const line  = document.createElement('div');
+    let logCls = 'log-line';
+    if (isErr) logCls += ' log-err';
+    else if (isOk) logCls += ' log-ok';
+    line.className = logCls;
+    line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
+    logOutput.appendChild(line);
+    logOutput.scrollTop = logOutput.scrollHeight;
+    logCount++;
+    cntLog.textContent = logCount;
+    if (isErr) hadError = true;
+  }
+
+  function clearLog() {
+    logOutput.innerHTML = '';
+    logCount = 0;
+    cntLog.textContent = '0';
+  }
+
+  function incrCount(key) {
+    panels[key].n++;
+    panels[key].count.textContent = panels[key].n;
+  }
+
+  function clearPanel(key) {
+    panels[key].body.innerHTML = '<div class="empty-state">Sin datos</div>';
+    panels[key].n = 0;
+    panels[key].count.textContent = '0';
+  }
+
+  function clearAll() {
+    Object.keys(panels).forEach(clearPanel);
+    clearLog();
+    hadError = false;
+  }
+
+  function removeEmpty(body) {
+    const e = body.querySelector('.empty-state');
+    if (e) e.remove();
+  }
+
+  function appendEntry(key, pedimento, data, isError) {
+    const p = panels[key];
+    removeEmpty(p.body);
+
+    const entry = document.createElement('div');
+    entry.className = 'entry' + (isError ? ' entry-error' : '');
+
+    if (pedimento) {
+      const label = document.createElement('div');
+      label.className = 'ped-label';
+      label.textContent = 'Pedimento ' + pedimento;
+      entry.appendChild(label);
+    }
+
+    const pre = document.createElement('pre');
+    pre.className = 'json-pre';
+    pre.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    entry.appendChild(pre);
+
+    p.body.appendChild(entry);
+    p.body.scrollTop = p.body.scrollHeight;
+    incrCount(key);
+  }
+
+  function replacePanel(key, data) {
+    panels[key].body.innerHTML = '';
+    panels[key].n = 0;
+    panels[key].count.textContent = '0';
+    appendEntry(key, null, data, false);
+  }
+
+  function finishRun(state) {
+    if (currentSSE) { currentSSE.close(); currentSSE = null; }
+    runBtn.disabled = false;
+    if (state === 'done') {
+      setStatus(hadError ? 'Completado con errores (ver Bitácora)' : 'Completado', hadError ? 'error' : 'done');
+    } else {
+      setStatus('Error de conexión SSE', 'error');
+      addLog('ERROR: No se pudo establecer la conexión SSE');
+    }
+  }
+
+  // ── File picker ───────────────────────────────────
+  fileInput.addEventListener('change', () => {
+    selectedFile = fileInput.files[0] || null;
+    if (selectedFile) {
+      fileName.textContent = selectedFile.name;
+      fileName.classList.add('selected');
+      runBtn.disabled = false;
+    } else {
+      fileName.textContent = 'Seleccionar archivo...';
+      fileName.classList.remove('selected');
+      runBtn.disabled = true;
+    }
+  });
+
+  // ── Run ───────────────────────────────────────────
+  async function startRun() {
+    if (!selectedFile) return;
+    if (currentSSE) { currentSSE.close(); currentSSE = null; }
+
+    clearAll();
+    runBtn.disabled = true;
+    setStatus('Subiendo archivo...', 'running');
+
+    // 1. Upload file → get token
+    let token;
+    try {
+      const form = new FormData();
+      form.append('file', selectedFile);
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('HTTP ' + res.status + ': ' + txt.trim());
+      }
+      const body = await res.json();
+      token = body.token;
+      if (!token) throw new Error('servidor no devolvió token');
+    } catch (e) {
+      addLog('ERROR al subir archivo: ' + e.message);
+      setStatus('Error al subir archivo', 'error');
+      runBtn.disabled = false;
+      return;
+    }
+
+    addLog('Archivo subido. Iniciando procesamiento...');
+    setStatus('Procesando...', 'running');
+
+    // 2. Stream SSE
+    const sse = new EventSource('/api/run?token=' + encodeURIComponent(token));
+    currentSSE = sse;
+
+    sse.addEventListener('log', e => {
+      const ev = JSON.parse(e.data);
+      addLog(ev.data);
+      setStatus(ev.data, hadError ? 'error' : 'running');
+    });
+
+    sse.addEventListener('sintactica', e => {
+      const ev = JSON.parse(e.data);
+      appendEntry('sintactica', ev.pedimento, ev.data, false);
+    });
+
+    sse.addEventListener('simplificados', e => {
+      const ev = JSON.parse(e.data);
+      appendEntry('simplificados', ev.pedimento, ev.data, ev.data && ev.data.status === 'error');
+    });
+
+    sse.addEventListener('pedimento', e => {
+      const ev = JSON.parse(e.data);
+      appendEntry('pedimento', ev.pedimento, ev.data, false);
+    });
+
+    sse.addEventListener('norcontrib', e => {
+      const ev = JSON.parse(e.data);
+      replacePanel('norcontrib', ev.data);
+    });
+
+    sse.addEventListener('dta', e => {
+      const ev = JSON.parse(e.data);
+      appendEntry('dta', ev.pedimento, ev.data, false);
+    });
+
+    sse.addEventListener('done', () => finishRun('done'));
+
+    // onerror siempre limpia — el EventSource puede estar en CONNECTING o CLOSED
+    sse.onerror = () => finishRun('error');
+  }
+
+  // ── Event listeners ───────────────────────────────
+  runBtn.addEventListener('click', startRun);
+  clearBtn.addEventListener('click', () => {
+    if (currentSSE) { currentSSE.close(); currentSSE = null; }
+    runBtn.disabled = !selectedFile;
+    clearAll();
+    setStatus('Listo', '');
+  });
+})();
+</script>
+</body>
+</html>
