@@ -15,6 +15,7 @@
     --text: #d4d4d8;
     --muted: #52525b;
     --error: #f87171;
+    --warn: #fbbf24;
     --ped-color: #7dd3fc;
     --font-mono: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
     --header-h: 48px;
@@ -56,34 +57,18 @@
 
   #sep { width: 1px; height: 20px; background: var(--border); }
 
-  /* File picker */
-  #file-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  #file-select {
     background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 5px 12px;
-    font-size: 13px;
     color: var(--text);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+    outline: none;
     cursor: pointer;
-    white-space: nowrap;
-    transition: border-color 0.15s;
-    min-width: 220px;
-    max-width: 320px;
-    overflow: hidden;
+    min-width: 180px;
   }
-  #file-label:hover { border-color: var(--accent); }
-  #file-label .icon { color: var(--muted); flex-shrink: 0; }
-  #file-label .fname {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--muted);
-    font-size: 12px;
-  }
-  #file-label .fname.selected { color: var(--text); }
-  #file-input { display: none; }
+  #file-select:focus { border-color: var(--accent); }
 
   #run-btn {
     background: var(--accent);
@@ -138,47 +123,15 @@
 
   #status-text { max-width: 340px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* ── Log strip ──────────────────────────────────── */
-  #log-strip {
-    height: 80px;
-    min-height: 80px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  #log-strip .panel-header { padding: 4px 12px; }
-
-  #log-output {
-    flex: 1;
-    overflow-y: auto;
-    padding: 4px 12px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    line-height: 1.6;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-  #log-output::-webkit-scrollbar { width: 4px; }
-  #log-output::-webkit-scrollbar-thumb { background: var(--border); }
-
-  .log-line { color: var(--muted); }
-  .log-line.log-err { color: var(--error); }
-  .log-line.log-ok { color: var(--accent); }
-
   /* ── Grid ───────────────────────────────────────── */
   #grid {
     flex: 1;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 3fr 1fr;
+    grid-template-rows: 1fr 1fr;
     gap: 1px;
     background: var(--border);
     overflow: hidden;
-    min-height: 0;
   }
 
   .panel {
@@ -186,19 +139,16 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 0;
   }
 
-  /* Top row — auto-placed: Sintáctico col1, Simplificados col2, Pedimento col3 */
-  /* Bottom row — small strip */
-  #panel-norcontrib { grid-column: 1;     grid-row: 2; }
-  #panel-dta        { grid-column: 2 / 4; grid-row: 2; }
+  #panel-norcontrib { grid-column: 3; grid-row: 1 / 3; }
+  #panel-dta        { grid-column: 1 / 3; grid-row: 2; }
 
   .panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 12px;
+    padding: 7px 12px;
     border-bottom: 1px solid var(--border);
     background: var(--surface2);
     flex-shrink: 0;
@@ -223,10 +173,10 @@
   .panel-body {
     flex: 1;
     overflow-y: auto;
+    padding: 0;
     font-family: var(--font-mono);
     font-size: 11.5px;
     line-height: 1.55;
-    min-height: 0;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
@@ -234,7 +184,7 @@
   .panel-body::-webkit-scrollbar-track { background: transparent; }
   .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-  /* ── Panel content ─────────────────────────────── */
+  /* ── Panel content blocks ─────────────────────── */
   .entry {
     border-bottom: 1px solid var(--border);
     padding: 10px 12px;
@@ -284,14 +234,8 @@
 <header id="header">
   <span id="brand">Orquestador</span>
   <div id="sep"></div>
-
-  <label id="file-label" for="file-input">
-    <span class="icon">📄</span>
-    <span class="fname" id="file-name">Seleccionar archivo...</span>
-  </label>
-  <input type="file" id="file-input">
-
-  <button id="run-btn" disabled>▶ Ejecutar</button>
+  <select id="file-select"><option value="">Cargando archivos...</option></select>
+  <button id="run-btn">▶ Ejecutar</button>
   <button id="clear-btn">Limpiar</button>
   <div class="spacer"></div>
   <div id="status-wrap">
@@ -301,7 +245,6 @@
 </header>
 
 <main id="grid">
-  <!-- Fila 1 (grande) -->
   <section class="panel" id="panel-sintactica">
     <div class="panel-header">
       <span class="panel-title">Sintáctico</span>
@@ -322,17 +265,6 @@
     </div>
   </section>
 
-  <section class="panel" id="panel-pedimento">
-    <div class="panel-header">
-      <span class="panel-title">Pedimento</span>
-      <span class="panel-count" id="cnt-pedimento">0</span>
-    </div>
-    <div class="panel-body" id="out-pedimento">
-      <div class="empty-state">Sin datos</div>
-    </div>
-  </section>
-
-  <!-- Fila 2 (pequeña) -->
   <section class="panel" id="panel-norcontrib">
     <div class="panel-header">
       <span class="panel-title">NorContribuciones</span>
@@ -354,67 +286,30 @@
   </section>
 </main>
 
-<div id="log-strip">
-  <div class="panel-header">
-    <span class="panel-title">Bitácora</span>
-    <span class="panel-count" id="cnt-log">0</span>
-  </div>
-  <div id="log-output"></div>
-</div>
-
 <script>
 (function () {
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const fileInput  = $('file-input');
-  const fileName   = $('file-name');
-  const runBtn     = $('run-btn');
-  const clearBtn   = $('clear-btn');
-  const statusDot  = $('status-dot');
-  const statusText = $('status-text');
-  const logOutput  = $('log-output');
-  const cntLog     = $('cnt-log');
+  const fileSelect  = $('file-select');
+  const runBtn      = $('run-btn');
+  const clearBtn    = $('clear-btn');
+  const statusDot   = $('status-dot');
+  const statusText  = $('status-text');
 
   const panels = {
     sintactica:    { body: $('out-sintactica'),    count: $('cnt-sintactica'),    n: 0 },
     simplificados: { body: $('out-simplificados'), count: $('cnt-simplificados'), n: 0 },
-    pedimento:     { body: $('out-pedimento'),      count: $('cnt-pedimento'),      n: 0 },
     norcontrib:    { body: $('out-norcontrib'),     count: $('cnt-norcontrib'),     n: 0 },
     dta:           { body: $('out-dta'),            count: $('cnt-dta'),            n: 0 },
   };
 
-  let currentSSE  = null;
-  let selectedFile = null;
-  let hadError    = false;
-  let logCount    = 0;
+  let currentSSE = null;
 
   // ── Helpers ───────────────────────────────────────
   function setStatus(text, state) {
     statusText.textContent = text;
     statusDot.className = state || '';
-  }
-
-  function addLog(text) {
-    const isErr = text.startsWith('ERROR');
-    const isOk  = text.startsWith('[OK]');
-    const line  = document.createElement('div');
-    let logCls = 'log-line';
-    if (isErr) logCls += ' log-err';
-    else if (isOk) logCls += ' log-ok';
-    line.className = logCls;
-    line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
-    logOutput.appendChild(line);
-    logOutput.scrollTop = logOutput.scrollHeight;
-    logCount++;
-    cntLog.textContent = logCount;
-    if (isErr) hadError = true;
-  }
-
-  function clearLog() {
-    logOutput.innerHTML = '';
-    logCount = 0;
-    cntLog.textContent = '0';
   }
 
   function incrCount(key) {
@@ -430,13 +325,11 @@
 
   function clearAll() {
     Object.keys(panels).forEach(clearPanel);
-    clearLog();
-    hadError = false;
   }
 
   function removeEmpty(body) {
-    const e = body.querySelector('.empty-state');
-    if (e) e.remove();
+    const empty = body.querySelector('.empty-state');
+    if (empty) empty.remove();
   }
 
   function appendEntry(key, pedimento, data, isError) {
@@ -470,71 +363,47 @@
     appendEntry(key, null, data, false);
   }
 
-  function finishRun(state) {
-    if (currentSSE) { currentSSE.close(); currentSSE = null; }
-    runBtn.disabled = false;
-    if (state === 'done') {
-      setStatus(hadError ? 'Completado con errores (ver Bitácora)' : 'Completado', hadError ? 'error' : 'done');
-    } else {
-      setStatus('Error de conexión SSE', 'error');
-      addLog('ERROR: No se pudo establecer la conexión SSE');
+  // ── File loader ───────────────────────────────────
+  async function loadFiles() {
+    try {
+      const res = await fetch('/api/files');
+      const files = await res.json();
+      fileSelect.innerHTML = '';
+      if (!files || files.length === 0) {
+        fileSelect.innerHTML = '<option value="">No hay archivos m*</option>';
+        return;
+      }
+      files.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = f;
+        fileSelect.appendChild(opt);
+      });
+    } catch (e) {
+      fileSelect.innerHTML = '<option value="">Error al cargar</option>';
     }
   }
 
-  // ── File picker ───────────────────────────────────
-  fileInput.addEventListener('change', () => {
-    selectedFile = fileInput.files[0] || null;
-    if (selectedFile) {
-      fileName.textContent = selectedFile.name;
-      fileName.classList.add('selected');
-      runBtn.disabled = false;
-    } else {
-      fileName.textContent = 'Seleccionar archivo...';
-      fileName.classList.remove('selected');
-      runBtn.disabled = true;
-    }
-  });
+  // ── SSE run ───────────────────────────────────────
+  function startRun() {
+    const file = fileSelect.value;
+    if (!file) return;
 
-  // ── Run ───────────────────────────────────────────
-  async function startRun() {
-    if (!selectedFile) return;
-    if (currentSSE) { currentSSE.close(); currentSSE = null; }
+    if (currentSSE) {
+      currentSSE.close();
+      currentSSE = null;
+    }
 
     clearAll();
     runBtn.disabled = true;
-    setStatus('Subiendo archivo...', 'running');
+    setStatus('Iniciando...', 'running');
 
-    // 1. Upload file → get token
-    let token;
-    try {
-      const form = new FormData();
-      form.append('file', selectedFile);
-      const res = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error('HTTP ' + res.status + ': ' + txt.trim());
-      }
-      const body = await res.json();
-      token = body.token;
-      if (!token) throw new Error('servidor no devolvió token');
-    } catch (e) {
-      addLog('ERROR al subir archivo: ' + e.message);
-      setStatus('Error al subir archivo', 'error');
-      runBtn.disabled = false;
-      return;
-    }
-
-    addLog('Archivo subido. Iniciando procesamiento...');
-    setStatus('Procesando...', 'running');
-
-    // 2. Stream SSE
-    const sse = new EventSource('/api/run?token=' + encodeURIComponent(token));
+    const url = '/api/run?file=' + encodeURIComponent(file);
+    const sse = new EventSource(url);
     currentSSE = sse;
 
     sse.addEventListener('log', e => {
       const ev = JSON.parse(e.data);
-      addLog(ev.data);
-      setStatus(ev.data, hadError ? 'error' : 'running');
+      setStatus(ev.data, 'running');
     });
 
     sse.addEventListener('sintactica', e => {
@@ -544,12 +413,8 @@
 
     sse.addEventListener('simplificados', e => {
       const ev = JSON.parse(e.data);
-      appendEntry('simplificados', ev.pedimento, ev.data, ev.data && ev.data.status === 'error');
-    });
-
-    sse.addEventListener('pedimento', e => {
-      const ev = JSON.parse(e.data);
-      appendEntry('pedimento', ev.pedimento, ev.data, false);
+      const isErr = ev.data && ev.data.status === 'error';
+      appendEntry('simplificados', ev.pedimento, ev.data, isErr);
     });
 
     sse.addEventListener('norcontrib', e => {
@@ -562,20 +427,34 @@
       appendEntry('dta', ev.pedimento, ev.data, false);
     });
 
-    sse.addEventListener('done', () => finishRun('done'));
+    sse.addEventListener('done', () => {
+      sse.close();
+      currentSSE = null;
+      runBtn.disabled = false;
+      setStatus('Completado', 'done');
+    });
 
-    // onerror siempre limpia — el EventSource puede estar en CONNECTING o CLOSED
-    sse.onerror = () => finishRun('error');
+    sse.onerror = () => {
+      if (sse.readyState === EventSource.CLOSED) {
+        currentSSE = null;
+        runBtn.disabled = false;
+        if (statusDot.className !== 'done') {
+          setStatus('Conexión cerrada', 'error');
+        }
+      }
+    };
   }
 
   // ── Event listeners ───────────────────────────────
   runBtn.addEventListener('click', startRun);
   clearBtn.addEventListener('click', () => {
-    if (currentSSE) { currentSSE.close(); currentSSE = null; }
-    runBtn.disabled = !selectedFile;
+    if (currentSSE) { currentSSE.close(); currentSSE = null; runBtn.disabled = false; }
     clearAll();
     setStatus('Listo', '');
   });
+
+  // ── Init ──────────────────────────────────────────
+  loadFiles();
 })();
 </script>
 </body>
