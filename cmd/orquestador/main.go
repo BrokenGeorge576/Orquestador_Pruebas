@@ -32,8 +32,10 @@ func (stdoutWriter) Write(ev orchestrator.PanelEvent) {
 	case orchestrator.EventDTA:
 		fmt.Printf("\n=== DTA/TCAMBIO — Pedimento %s ===\n", ev.Pedimento)
 		printJSON(ev.Data)
-	case orchestrator.EventSimplificados:
-		fmt.Printf("\n=== SIMPLIFICADOS — Pedimento %s ===\n", ev.Pedimento)
+	case orchestrator.EventModules:
+		// solo informativo en terminal
+	case orchestrator.EventModule:
+		fmt.Printf("\n=== %s — Pedimento %s ===\n", ev.Module, ev.Pedimento)
 		printJSON(ev.Data)
 	}
 }

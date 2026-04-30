@@ -5,17 +5,19 @@ import "context"
 type EventType string
 
 const (
-	EventLog           EventType = "log"
-	EventSintactica    EventType = "sintactica"
-	EventSimplificados EventType = "simplificados"
-	EventNorContrib    EventType = "norcontrib"
-	EventDTA           EventType = "dta"
-	EventPedimento     EventType = "pedimento"
+	EventLog       EventType = "log"
+	EventSintactica EventType = "sintactica"
+	EventNorContrib EventType = "norcontrib"
+	EventDTA       EventType = "dta"
+	EventPedimento EventType = "pedimento"
+	EventModules   EventType = "modules" // lista de módulos al inicio del stream
+	EventModule    EventType = "module"  // resultado de un módulo gRPC (campo Module indica cuál)
 )
 
 type PanelEvent struct {
 	Type      EventType   `json:"type"`
 	Pedimento string      `json:"pedimento,omitempty"`
+	Module    string      `json:"module,omitempty"`
 	Data      interface{} `json:"data"`
 }
 

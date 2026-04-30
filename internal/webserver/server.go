@@ -166,7 +166,12 @@ type sseWriter struct {
 func (sw *sseWriter) Write(event orchestrator.PanelEvent) {
 	data, err := json.Marshal(event)
 	if err != nil {
-		return
+		// El evento no se puede serializar; lo reemplazamos por un log de error.
+		errEvent := orchestrator.PanelEvent{
+			Type: orchestrator.EventLog,
+			Data: fmt.Sprintf("ERROR interno: no se pudo serializar evento %s: %v", event.Type, err),
+		}
+		data, _ = json.Marshal(errEvent)
 	}
 	sw.mu.Lock()
 	defer sw.mu.Unlock()

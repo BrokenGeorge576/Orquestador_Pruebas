@@ -6,19 +6,17 @@
 <title>Orquestador</title>
 <style>
   :root {
-    --bg: #0d0d0f;
-    --surface: #141416;
-    --surface2: #1c1c1f;
-    --border: #272729;
-    --accent: #00e676;
-    --accent-dim: #00c85a;
-    --text: #d4d4d8;
-    --muted: #52525b;
-    --error: #f87171;
-    --warn: #fbbf24;
-    --ped-color: #7dd3fc;
-    --font-mono: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
-    --header-h: 48px;
+    --bg:        #0d0d0f;
+    --surface:   #141416;
+    --surface2:  #1c1c1f;
+    --border:    #272729;
+    --accent:    #00e676;
+    --accent-d:  #00c85a;
+    --text:      #d4d4d8;
+    --muted:     #52525b;
+    --error:     #f87171;
+    --ped:       #7dd3fc;
+    --mono:      'Cascadia Code','Fira Code','Courier New',monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,42 +31,51 @@
     overflow: hidden;
   }
 
-  /* ── Header ─────────────────────────────────────── */
+  /* ── Header ──────────────────────────────── */
   #header {
-    height: var(--header-h);
-    min-height: var(--header-h);
+    height: 48px;
+    min-height: 48px;
+    flex-shrink: 0;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 0 16px;
-    flex-shrink: 0;
   }
 
   #brand {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--accent);
     white-space: nowrap;
   }
 
-  #sep { width: 1px; height: 20px; background: var(--border); }
+  #vsep { width: 1px; height: 20px; background: var(--border); }
 
-  #file-select {
+  #file-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     background: var(--surface2);
-    color: var(--text);
     border: 1px solid var(--border);
-    padding: 5px 10px;
-    font-size: 13px;
     border-radius: 4px;
-    outline: none;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--muted);
     cursor: pointer;
-    min-width: 180px;
+    min-width: 200px;
+    max-width: 300px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+    white-space: nowrap;
   }
-  #file-select:focus { border-color: var(--accent); }
+  #file-label:hover { border-color: var(--accent); }
+  #file-label span { overflow: hidden; text-overflow: ellipsis; }
+  #file-label.ready { color: var(--text); border-color: var(--border); }
+  #file-input { display: none; }
 
   #run-btn {
     background: var(--accent);
@@ -79,12 +86,11 @@
     font-weight: 700;
     border-radius: 4px;
     cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: background 0.15s;
     white-space: nowrap;
+    transition: background 0.15s;
   }
-  #run-btn:hover:not(:disabled) { background: var(--accent-dim); }
-  #run-btn:disabled { background: var(--muted); color: #888; cursor: not-allowed; }
+  #run-btn:hover:not(:disabled) { background: var(--accent-d); }
+  #run-btn:disabled { background: var(--muted); color: #777; cursor: not-allowed; }
 
   #clear-btn {
     background: transparent;
@@ -100,142 +106,126 @@
 
   .spacer { flex: 1; }
 
-  #status-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
+  #status-wrap { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
   #status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--muted);
-    flex-shrink: 0;
-    transition: background 0.2s;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0; transition: background 0.2s;
   }
   #status-dot.running { background: var(--accent); animation: blink 1.2s ease-in-out infinite; }
-  #status-dot.done    { background: var(--accent); animation: none; }
-  #status-dot.error   { background: var(--error); animation: none; }
-
+  #status-dot.done    { background: var(--accent); }
+  #status-dot.error   { background: var(--error); }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+  #status-text { max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  #status-text { max-width: 340px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  /* ── Grid ───────────────────────────────────────── */
-  #grid {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 1px;
-    background: var(--border);
-    overflow: hidden;
-  }
-
+  /* ── Panel base ──────────────────────────── */
   .panel {
     background: var(--surface);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
+    min-width: 0;
   }
-
-  #panel-norcontrib { grid-column: 3; grid-row: 1 / 3; }
-  #panel-dta        { grid-column: 1 / 3; grid-row: 2; }
-
-  .panel-header {
+  .ph {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 7px 12px;
+    padding: 6px 12px;
     border-bottom: 1px solid var(--border);
     background: var(--surface2);
     flex-shrink: 0;
   }
-
-  .panel-title {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+  .ph-title {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
     color: var(--muted);
   }
-
-  .panel-count {
-    font-size: 10px;
-    color: var(--muted);
-    background: var(--border);
-    padding: 1px 6px;
-    border-radius: 10px;
+  .ph-count {
+    font-size: 10px; color: var(--muted);
+    background: var(--border); padding: 1px 6px; border-radius: 10px;
   }
-
-  .panel-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0;
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    line-height: 1.55;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+  .pb {
+    flex: 1; overflow-y: auto;
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.55;
+    min-height: 0;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
   }
-  .panel-body::-webkit-scrollbar { width: 5px; }
-  .panel-body::-webkit-scrollbar-track { background: transparent; }
-  .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .pb::-webkit-scrollbar { width: 5px; }
+  .pb::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-  /* ── Panel content blocks ─────────────────────── */
-  .entry {
-    border-bottom: 1px solid var(--border);
-    padding: 10px 12px;
-  }
+  .entry { border-bottom: 1px solid var(--border); padding: 10px 12px; }
   .entry:last-child { border-bottom: none; }
+  .entry.err .json-pre { color: var(--error); }
 
   .ped-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--ped-color);
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--ped);
+    margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
   }
   .ped-label::before {
-    content: '';
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--ped-color);
+    content: ''; display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--ped);
+  }
+  .json-pre { white-space: pre-wrap; word-break: break-all; color: var(--text); }
+  .empty { display: flex; align-items: center; justify-content: center;
+    height: 100%; color: var(--muted); font-size: 12px; font-family: var(--mono); }
+
+  /* ── Fixed grid (Sintáctico, Pedimento, NorContrib, DTA) ── */
+  #fixed-grid {
+    flex: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 2fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    min-height: 0;
   }
 
-  .json-pre {
-    white-space: pre-wrap;
-    word-break: break-all;
-    color: var(--text);
+  /* ── Dynamic modules row ─────────────────── */
+  #modules-section {
+    display: none; /* shown when at least 1 module exists */
+    flex: 2;
+    flex-direction: row;
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+    min-height: 0;
   }
+  #modules-section .panel { flex: 1; }
 
-  .empty-state {
+  /* ── Log strip ───────────────────────────── */
+  #log-strip {
+    flex-shrink: 0;
+    height: 80px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--muted);
-    font-size: 12px;
-    font-family: var(--font-mono);
+    flex-direction: column;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    overflow: hidden;
   }
-
-  .entry-error .json-pre { color: var(--error); }
+  #log-strip .ph { padding: 4px 12px; }
+  #log-out {
+    flex: 1; overflow-y: auto; padding: 4px 12px;
+    font-family: var(--mono); font-size: 11px; line-height: 1.6;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  #log-out::-webkit-scrollbar { width: 4px; }
+  #log-out::-webkit-scrollbar-thumb { background: var(--border); }
+  .ll { color: var(--muted); }
+  .ll.ok  { color: var(--accent); }
+  .ll.err { color: var(--error); }
 </style>
 </head>
 <body>
 
 <header id="header">
   <span id="brand">Orquestador</span>
-  <div id="sep"></div>
-  <select id="file-select"><option value="">Cargando archivos...</option></select>
-  <button id="run-btn">▶ Ejecutar</button>
+  <div id="vsep"></div>
+  <label id="file-label" for="file-input">
+    📄 <span id="file-name">Seleccionar archivo...</span>
+  </label>
+  <input type="file" id="file-input">
+  <button id="run-btn" disabled>▶ Ejecutar</button>
   <button id="clear-btn">Limpiar</button>
   <div class="spacer"></div>
   <div id="status-wrap">
@@ -244,217 +234,310 @@
   </div>
 </header>
 
-<main id="grid">
-  <section class="panel" id="panel-sintactica">
-    <div class="panel-header">
-      <span class="panel-title">Sintáctico</span>
-      <span class="panel-count" id="cnt-sintactica">0</span>
-    </div>
-    <div class="panel-body" id="out-sintactica">
-      <div class="empty-state">Sin datos</div>
-    </div>
-  </section>
+<!-- Paneles fijos: Sintáctico, Pedimento, NorContribuciones, DTA -->
+<div id="fixed-grid">
+  <div class="panel" id="panel-sint">
+    <div class="ph"><span class="ph-title">Sintáctico</span><span class="ph-count" id="cnt-sint">0</span></div>
+    <div class="pb" id="out-sint"><div class="empty">Sin datos</div></div>
+  </div>
+  <div class="panel" id="panel-ped">
+    <div class="ph"><span class="ph-title">Pedimento</span><span class="ph-count" id="cnt-ped">0</span></div>
+    <div class="pb" id="out-ped"><div class="empty">Sin datos</div></div>
+  </div>
+  <div class="panel" id="panel-nor">
+    <div class="ph"><span class="ph-title">NorContribuciones</span><span class="ph-count" id="cnt-nor">0</span></div>
+    <div class="pb" id="out-nor"><div class="empty">Sin datos</div></div>
+  </div>
+  <div class="panel" id="panel-dta">
+    <div class="ph"><span class="ph-title">DTA / TCambio</span><span class="ph-count" id="cnt-dta">0</span></div>
+    <div class="pb" id="out-dta"><div class="empty">Sin datos</div></div>
+  </div>
+</div>
 
-  <section class="panel" id="panel-simplificados">
-    <div class="panel-header">
-      <span class="panel-title">Simplificados</span>
-      <span class="panel-count" id="cnt-simplificados">0</span>
-    </div>
-    <div class="panel-body" id="out-simplificados">
-      <div class="empty-state">Sin datos</div>
-    </div>
-  </section>
+<!-- Paneles dinámicos: uno por módulo gRPC definido en modulos[] -->
+<div id="modules-section"></div>
 
-  <section class="panel" id="panel-norcontrib">
-    <div class="panel-header">
-      <span class="panel-title">NorContribuciones</span>
-      <span class="panel-count" id="cnt-norcontrib">0</span>
-    </div>
-    <div class="panel-body" id="out-norcontrib">
-      <div class="empty-state">Sin datos</div>
-    </div>
-  </section>
-
-  <section class="panel" id="panel-dta">
-    <div class="panel-header">
-      <span class="panel-title">DTA / TCambio</span>
-      <span class="panel-count" id="cnt-dta">0</span>
-    </div>
-    <div class="panel-body" id="out-dta">
-      <div class="empty-state">Sin datos</div>
-    </div>
-  </section>
-</main>
+<!-- Bitácora -->
+<div id="log-strip">
+  <div class="ph"><span class="ph-title">Bitácora</span><span class="ph-count" id="cnt-log">0</span></div>
+  <div id="log-out"></div>
+</div>
 
 <script>
 (function () {
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const fileSelect  = $('file-select');
-  const runBtn      = $('run-btn');
-  const clearBtn    = $('clear-btn');
-  const statusDot   = $('status-dot');
-  const statusText  = $('status-text');
 
-  const panels = {
-    sintactica:    { body: $('out-sintactica'),    count: $('cnt-sintactica'),    n: 0 },
-    simplificados: { body: $('out-simplificados'), count: $('cnt-simplificados'), n: 0 },
-    norcontrib:    { body: $('out-norcontrib'),     count: $('cnt-norcontrib'),     n: 0 },
-    dta:           { body: $('out-dta'),            count: $('cnt-dta'),            n: 0 },
+  // Paneles fijos
+  const fixed = {
+    sint: { body: $('out-sint'), count: $('cnt-sint'), n: 0 },
+    ped:  { body: $('out-ped'),  count: $('cnt-ped'),  n: 0 },
+    nor:  { body: $('out-nor'),  count: $('cnt-nor'),  n: 0 },
+    dta:  { body: $('out-dta'),  count: $('cnt-dta'),  n: 0 },
   };
 
-  let currentSSE = null;
+  // Paneles dinámicos de módulos: { [moduleName]: { body, count, n } }
+  const modPanels = {};
 
-  // ── Helpers ───────────────────────────────────────
+  let sse          = null;
+  let selectedFile = null;
+  let hadError     = false;
+  let logN         = 0;
+  let streamDone   = false;
+
+  // ── Estado ──────────────────────────────────────
   function setStatus(text, state) {
-    statusText.textContent = text;
-    statusDot.className = state || '';
+    $('status-text').textContent = text;
+    $('status-dot').className = state || '';
   }
 
-  function incrCount(key) {
-    panels[key].n++;
-    panels[key].count.textContent = panels[key].n;
+  // ── Log ─────────────────────────────────────────
+  function addLog(text) {
+    const isErr = text.startsWith('ERROR');
+    const isOk  = text.startsWith('[OK]');
+    const line  = document.createElement('div');
+    let cls = 'll';
+    if (isErr) cls += ' err';
+    else if (isOk) cls += ' ok';
+    line.className = cls;
+    line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
+    $('log-out').appendChild(line);
+    $('log-out').scrollTop = $('log-out').scrollHeight;
+    $('cnt-log').textContent = ++logN;
+    if (isErr) hadError = true;
   }
 
-  function clearPanel(key) {
-    panels[key].body.innerHTML = '<div class="empty-state">Sin datos</div>';
-    panels[key].n = 0;
-    panels[key].count.textContent = '0';
+  function clearLog() {
+    $('log-out').innerHTML = '';
+    $('cnt-log').textContent = '0';
+    logN = 0;
   }
 
-  function clearAll() {
-    Object.keys(panels).forEach(clearPanel);
+  // ── Panel helpers ────────────────────────────────
+  function incr(panel) {
+    panel.n++;
+    panel.count.textContent = panel.n;
   }
 
-  function removeEmpty(body) {
-    const empty = body.querySelector('.empty-state');
-    if (empty) empty.remove();
+  function clearPanel(panel) {
+    panel.body.innerHTML = '<div class="empty">Sin datos</div>';
+    panel.n = 0;
+    panel.count.textContent = '0';
   }
 
-  function appendEntry(key, pedimento, data, isError) {
-    const p = panels[key];
-    removeEmpty(p.body);
+  function rmEmpty(body) {
+    const e = body.querySelector('.empty');
+    if (e) e.remove();
+  }
 
+  function appendEntry(panel, pedimento, data, isErr) {
+    rmEmpty(panel.body);
     const entry = document.createElement('div');
-    entry.className = 'entry' + (isError ? ' entry-error' : '');
-
+    entry.className = 'entry' + (isErr ? ' err' : '');
     if (pedimento) {
-      const label = document.createElement('div');
-      label.className = 'ped-label';
-      label.textContent = 'Pedimento ' + pedimento;
-      entry.appendChild(label);
+      const lbl = document.createElement('div');
+      lbl.className = 'ped-label';
+      lbl.textContent = 'Pedimento ' + pedimento;
+      entry.appendChild(lbl);
     }
-
     const pre = document.createElement('pre');
     pre.className = 'json-pre';
     pre.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
     entry.appendChild(pre);
-
-    p.body.appendChild(entry);
-    p.body.scrollTop = p.body.scrollHeight;
-    incrCount(key);
+    panel.body.appendChild(entry);
+    panel.body.scrollTop = panel.body.scrollHeight;
+    incr(panel);
   }
 
-  function replacePanel(key, data) {
-    panels[key].body.innerHTML = '';
-    panels[key].n = 0;
-    panels[key].count.textContent = '0';
-    appendEntry(key, null, data, false);
+  function replacePanel(panel, data) {
+    panel.body.innerHTML = '';
+    panel.n = 0;
+    panel.count.textContent = '0';
+    appendEntry(panel, null, data, false);
   }
 
-  // ── File loader ───────────────────────────────────
-  async function loadFiles() {
-    try {
-      const res = await fetch('/api/files');
-      const files = await res.json();
-      fileSelect.innerHTML = '';
-      if (!files || files.length === 0) {
-        fileSelect.innerHTML = '<option value="">No hay archivos m*</option>';
-        return;
-      }
-      files.forEach(f => {
-        const opt = document.createElement('option');
-        opt.value = opt.textContent = f;
-        fileSelect.appendChild(opt);
-      });
-    } catch (e) {
-      fileSelect.innerHTML = '<option value="">Error al cargar</option>';
+  // ── Módulos dinámicos ────────────────────────────
+  function createModulePanel(name) {
+    if (modPanels[name]) return;
+
+    const section = $('modules-section');
+    section.style.display = 'flex';
+
+    const wrap  = document.createElement('div');
+    wrap.className = 'panel';
+
+    const ph    = document.createElement('div');
+    ph.className = 'ph';
+    const title = document.createElement('span');
+    title.className = 'ph-title';
+    title.textContent = name;
+    const count = document.createElement('span');
+    count.className = 'ph-count';
+    count.textContent = '0';
+    ph.appendChild(title);
+    ph.appendChild(count);
+
+    const body  = document.createElement('div');
+    body.className = 'pb';
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'Sin datos';
+    body.appendChild(empty);
+
+    wrap.appendChild(ph);
+    wrap.appendChild(body);
+    section.appendChild(wrap);
+
+    modPanels[name] = { body, count, n: 0 };
+  }
+
+  function clearModules() {
+    const section = $('modules-section');
+    section.style.display = 'none';
+    section.innerHTML = '';
+    for (const k in modPanels) delete modPanels[k];
+  }
+
+  // ── Reset completo ───────────────────────────────
+  function clearAll() {
+    Object.values(fixed).forEach(clearPanel);
+    clearModules();
+    clearLog();
+    hadError = false;
+  }
+
+  // ── Fin de ejecución ─────────────────────────────
+  function finish(state) {
+    if (sse) { sse.close(); sse = null; }
+    $('run-btn').disabled = !selectedFile;
+    if (state === 'done') {
+      streamDone = true;
+      setStatus(
+        hadError ? 'Completado con errores (ver Bitácora)' : 'Completado',
+        hadError ? 'error' : 'done'
+      );
+    } else if (!streamDone) {
+      // onerror real (antes de recibir done)
+      addLog('ERROR: conexión SSE interrumpida antes de completar');
+      setStatus('Error de conexión', 'error');
     }
+    // Si streamDone=true y onerror dispara, es solo el cierre normal del socket — ignorar
   }
 
-  // ── SSE run ───────────────────────────────────────
-  function startRun() {
-    const file = fileSelect.value;
-    if (!file) return;
-
-    if (currentSSE) {
-      currentSSE.close();
-      currentSSE = null;
+  // ── File picker ──────────────────────────────────
+  $('file-input').addEventListener('change', () => {
+    selectedFile = $('file-input').files[0] || null;
+    const lbl = $('file-label');
+    if (selectedFile) {
+      $('file-name').textContent = selectedFile.name;
+      lbl.classList.add('ready');
+      $('run-btn').disabled = false;
+    } else {
+      $('file-name').textContent = 'Seleccionar archivo...';
+      lbl.classList.remove('ready');
+      $('run-btn').disabled = true;
     }
+  });
+
+  // ── Ejecutar ─────────────────────────────────────
+  async function startRun() {
+    if (!selectedFile) return;
+    if (sse) { sse.close(); sse = null; }
 
     clearAll();
-    runBtn.disabled = true;
-    setStatus('Iniciando...', 'running');
+    streamDone = false;
+    $('run-btn').disabled = true;
+    setStatus('Subiendo archivo...', 'running');
 
-    const url = '/api/run?file=' + encodeURIComponent(file);
-    const sse = new EventSource(url);
-    currentSSE = sse;
+    // 1. Upload → token
+    let token;
+    try {
+      const form = new FormData();
+      form.append('file', selectedFile);
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('HTTP ' + res.status + ': ' + txt.trim());
+      }
+      const json = await res.json();
+      token = json.token;
+      if (!token) throw new Error('servidor no devolvió token');
+    } catch (e) {
+      addLog('ERROR al subir: ' + e.message);
+      setStatus('Error al subir archivo', 'error');
+      $('run-btn').disabled = false;
+      return;
+    }
+
+    addLog('Archivo subido correctamente. Iniciando...');
+    setStatus('Procesando...', 'running');
+
+    // 2. SSE stream
+    sse = new EventSource('/api/run?token=' + encodeURIComponent(token));
 
     sse.addEventListener('log', e => {
       const ev = JSON.parse(e.data);
-      setStatus(ev.data, 'running');
+      addLog(ev.data);
+      setStatus(ev.data, hadError ? 'error' : 'running');
+    });
+
+    // Lista de módulos → crear paneles antes de recibir resultados
+    sse.addEventListener('modules', e => {
+      const ev = JSON.parse(e.data);
+      if (Array.isArray(ev.data)) {
+        ev.data.forEach(createModulePanel);
+      }
+    });
+
+    // Resultado de un módulo gRPC → panel dinámico correspondiente
+    sse.addEventListener('module', e => {
+      try {
+        const ev = JSON.parse(e.data);
+        if (!modPanels[ev.module]) createModulePanel(ev.module);
+        const panel = modPanels[ev.module];
+        if (!panel) {
+          addLog('ERROR: panel no encontrado para módulo ' + ev.module);
+          return;
+        }
+        const isErr = ev.data && ev.data.status === 'error';
+        appendEntry(panel, ev.pedimento, ev.data, isErr);
+      } catch (err) {
+        addLog('ERROR al renderizar módulo: ' + err.message);
+      }
     });
 
     sse.addEventListener('sintactica', e => {
       const ev = JSON.parse(e.data);
-      appendEntry('sintactica', ev.pedimento, ev.data, false);
+      appendEntry(fixed.sint, ev.pedimento, ev.data, false);
     });
 
-    sse.addEventListener('simplificados', e => {
+    sse.addEventListener('pedimento', e => {
       const ev = JSON.parse(e.data);
-      const isErr = ev.data && ev.data.status === 'error';
-      appendEntry('simplificados', ev.pedimento, ev.data, isErr);
+      appendEntry(fixed.ped, ev.pedimento, ev.data, false);
     });
 
     sse.addEventListener('norcontrib', e => {
       const ev = JSON.parse(e.data);
-      replacePanel('norcontrib', ev.data);
+      replacePanel(fixed.nor, ev.data);
     });
 
     sse.addEventListener('dta', e => {
       const ev = JSON.parse(e.data);
-      appendEntry('dta', ev.pedimento, ev.data, false);
+      appendEntry(fixed.dta, ev.pedimento, ev.data, false);
     });
 
-    sse.addEventListener('done', () => {
-      sse.close();
-      currentSSE = null;
-      runBtn.disabled = false;
-      setStatus('Completado', 'done');
-    });
-
-    sse.onerror = () => {
-      if (sse.readyState === EventSource.CLOSED) {
-        currentSSE = null;
-        runBtn.disabled = false;
-        if (statusDot.className !== 'done') {
-          setStatus('Conexión cerrada', 'error');
-        }
-      }
-    };
+    sse.addEventListener('done', () => finish('done'));
+    sse.onerror = () => finish('error');
   }
 
-  // ── Event listeners ───────────────────────────────
-  runBtn.addEventListener('click', startRun);
-  clearBtn.addEventListener('click', () => {
-    if (currentSSE) { currentSSE.close(); currentSSE = null; runBtn.disabled = false; }
+  $('run-btn').addEventListener('click', startRun);
+  $('clear-btn').addEventListener('click', () => {
+    if (sse) { sse.close(); sse = null; }
+    $('run-btn').disabled = !selectedFile;
     clearAll();
     setStatus('Listo', '');
   });
-
-  // ── Init ──────────────────────────────────────────
-  loadFiles();
 })();
 </script>
 </body>

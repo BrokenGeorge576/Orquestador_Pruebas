@@ -27,6 +27,7 @@ type PedimentoContext struct {
 	EstadoSint   interface{}
 }
 
+// Agregar módulos aquí genera automáticamente un panel nuevo en la interfaz web.
 var modulos = []ModuleConfig{
 	{
 		Name:       "Simplificados",
@@ -42,6 +43,16 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 			Data: fmt.Sprintf(msg, args...),
 		})
 	}
+
+	// Notificar a la UI qué módulos gRPC existen para que cree los paneles.
+	moduleNames := make([]string, len(modulos))
+	for i, m := range modulos {
+		moduleNames[i] = m.Name
+	}
+	writer.Write(orchestrator.PanelEvent{
+		Type: orchestrator.EventModules,
+		Data: moduleNames,
+	})
 
 	logf("Conectando a Sintáctica (%s)...", urlSintactico)
 	resultadoSintactica, err := grpcclient.ProcessRestSintactica(urlSintactico, archivo)
@@ -130,7 +141,7 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 		})
 	}
 
-	logf("Procesando %d pedimento(s) con módulos gRPC...", len(pedimentosAProcesar))
+	logf("Procesando %d pedimento(s) con %d módulo(s) gRPC...", len(pedimentosAProcesar), len(modulos))
 
 	for i, ped := range pedimentosAProcesar {
 		select {
@@ -156,16 +167,23 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 
 				if err != nil {
 					writer.Write(orchestrator.PanelEvent{
-						Type:      orchestrator.EventSimplificados,
+						Type:      orchestrator.EventLog,
+						Data:      fmt.Sprintf("ADVERTENCIA: módulo '%s' falló (%s): %v", m.Name, m.Host, err),
+					})
+					writer.Write(orchestrator.PanelEvent{
+						Type:      orchestrator.EventModule,
+						Module:    m.Name,
 						Pedimento: numPed,
-						Data: map[string]string{
-							"status":  "error",
-							"message": err.Error(),
-						},
+						Data:      map[string]string{"status": "error", "message": err.Error()},
 					})
 				} else {
 					writer.Write(orchestrator.PanelEvent{
-						Type:      orchestrator.EventSimplificados,
+						Type:      orchestrator.EventLog,
+						Data:      fmt.Sprintf("[OK] Módulo '%s' — resultado recibido (ped. %s)", m.Name, numPed),
+					})
+					writer.Write(orchestrator.PanelEvent{
+						Type:      orchestrator.EventModule,
+						Module:    m.Name,
 						Pedimento: numPed,
 						Data:      res,
 					})
