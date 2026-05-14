@@ -61,7 +61,7 @@ func main() {
 		return
 	}
 
-	srv := webserver.New(runOrchestrator, staticFiles)
+	srv := webserver.New(runOrchestrator, runBatchOrchestrator, staticFiles)
 	addr := fmt.Sprintf(":%s", *port)
 	log.Printf("Orquestador iniciado → http://localhost%s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, srv))

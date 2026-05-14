@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 
 	"orquestador_p/internal/grpcclient"
@@ -196,5 +198,129 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 	}
 
 	logf("Procesamiento completo")
+	return nil
+}
+
+// ── Batch Mode ─────────────────────────────────────────────────────────────
+
+type batchCollector struct {
+	mu      sync.Mutex
+	results map[string][]orchestrator.BatchModuleResult
+}
+
+func newBatchCollector() *batchCollector {
+	return &batchCollector{results: make(map[string][]orchestrator.BatchModuleResult)}
+}
+
+func (bc *batchCollector) Write(event orchestrator.PanelEvent) {
+	if event.Type != orchestrator.EventModule {
+		return
+	}
+	status := "ok"
+	var data interface{}
+	data = event.Data
+	switch d := event.Data.(type) {
+	case map[string]string:
+		if d["status"] == "error" {
+			status = "error"
+		}
+	case map[string]interface{}:
+		topStatus, _ := d["status"].(string)
+		if strings.EqualFold(topStatus, "error") || hasModuleError(d) {
+			status = "error"
+		}
+	}
+	bc.mu.Lock()
+	bc.results[event.Module] = append(bc.results[event.Module], orchestrator.BatchModuleResult{
+		Pedimento: event.Pedimento,
+		Status:    status,
+		Data:      data,
+	})
+	bc.mu.Unlock()
+}
+
+// hasModuleError inspecciona Resultado[*].Estado[*].Status para detectar errores
+// de negocio que el módulo devuelve con Status:"Error" dentro de la respuesta gRPC.
+func hasModuleError(data map[string]interface{}) bool {
+	resultadoRaw, ok := data["Resultado"]
+	if !ok {
+		return false
+	}
+	resultado, ok := resultadoRaw.([]interface{})
+	if !ok {
+		return false
+	}
+	for _, itemRaw := range resultado {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		estados, ok := item["Estado"].([]interface{})
+		if !ok {
+			continue
+		}
+		for _, eRaw := range estados {
+			e, ok := eRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if s, _ := e["Status"].(string); strings.EqualFold(s, "error") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (bc *batchCollector) summary(fileName string) orchestrator.BatchFileSummary {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+	var mods []orchestrator.BatchModuleSummary
+	for _, mod := range modulos {
+		results := bc.results[mod.Name]
+		overall := "ok"
+		for _, r := range results {
+			if r.Status == "error" {
+				overall = "error"
+				break
+			}
+		}
+		mods = append(mods, orchestrator.BatchModuleSummary{
+			Module:        mod.Name,
+			Results:       results,
+			OverallStatus: overall,
+		})
+	}
+	return orchestrator.BatchFileSummary{FileName: fileName, Modules: mods}
+}
+
+func runBatchOrchestrator(ctx context.Context, filePaths []string, writer orchestrator.PanelWriter) error {
+	total := len(filePaths)
+	for i, path := range filePaths {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+		fileName := filepath.Base(path)
+		writer.Write(orchestrator.PanelEvent{
+			Type: orchestrator.EventBatchFileStart,
+			Data: map[string]interface{}{"file_name": fileName, "index": i + 1, "total": total},
+		})
+		collector := newBatchCollector()
+		runErr := runOrchestrator(ctx, path, collector)
+		errMsg := ""
+		if runErr != nil {
+			errMsg = runErr.Error()
+		}
+		writer.Write(orchestrator.PanelEvent{
+			Type: orchestrator.EventBatchFileDone,
+			Data: map[string]interface{}{"summary": collector.summary(fileName), "error": errMsg},
+		})
+	}
+	writer.Write(orchestrator.PanelEvent{
+		Type: orchestrator.EventBatchDone,
+		Data: map[string]interface{}{"total": total},
+	})
 	return nil
 }

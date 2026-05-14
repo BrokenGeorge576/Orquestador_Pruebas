@@ -27,3 +27,28 @@ type PanelWriter interface {
 }
 
 type OrchestratorFn func(ctx context.Context, archivo string, writer PanelWriter) error
+
+const (
+	EventBatchFileStart EventType = "batch_file_start"
+	EventBatchFileDone  EventType = "batch_file_done"
+	EventBatchDone      EventType = "batch_done"
+)
+
+type BatchOrchestratorFn func(ctx context.Context, filePaths []string, writer PanelWriter) error
+
+type BatchModuleResult struct {
+	Pedimento string      `json:"pedimento"`
+	Status    string      `json:"status"`
+	Data      interface{} `json:"data,omitempty"`
+}
+
+type BatchModuleSummary struct {
+	Module        string              `json:"module"`
+	Results       []BatchModuleResult `json:"results"`
+	OverallStatus string              `json:"overall_status"`
+}
+
+type BatchFileSummary struct {
+	FileName string               `json:"file_name"`
+	Modules  []BatchModuleSummary `json:"modules"`
+}

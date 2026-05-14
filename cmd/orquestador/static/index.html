@@ -214,6 +214,212 @@
   .ll { color: var(--muted); }
   .ll.ok  { color: var(--accent); }
   .ll.err { color: var(--error); }
+
+  /* ── Batch mode ─────────────────────────────── */
+  #batch-mode-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  #batch-mode-btn:hover { color: var(--text); border-color: var(--muted); }
+  #batch-mode-btn.active { color: var(--accent); border-color: var(--accent); }
+
+  #single-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #batch-view {
+    display: none;
+    flex-direction: column;
+  }
+  #batch-view.active {
+    display: flex;
+    min-height: calc(100vh - 48px);
+  }
+
+  #batch-header {
+    position: sticky;
+    top: 48px;
+    z-index: 10;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  #batch-back-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  #batch-back-btn:hover { color: var(--text); border-color: var(--muted); }
+
+  #batch-file-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s;
+  }
+  #batch-file-label:hover { border-color: var(--accent); }
+  #batch-file-label.ready { color: var(--text); }
+  #batch-file-input { display: none; }
+
+  #batch-file-count { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+  #batch-run-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  #batch-run-btn:hover:not(:disabled) { background: var(--accent-d); }
+  #batch-run-btn:disabled { background: var(--muted); color: #777; cursor: not-allowed; }
+
+  #batch-clear-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  #batch-clear-btn:hover { color: var(--text); border-color: var(--muted); }
+
+  #batch-progress { position: sticky; top: calc(48px + 45px); z-index: 9; flex-shrink: 0; height: 3px; background: var(--border); }
+  #batch-progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
+
+  #batch-results {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .batch-file-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .batch-file-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .batch-file-name { font-size: 12px; font-weight: 700; color: var(--text); font-family: var(--mono); }
+  .batch-file-index { font-size: 10px; color: var(--muted); margin-left: auto; }
+  .batch-status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+  }
+  .batch-status-dot.processing { background: var(--accent); animation: blink 1.2s ease-in-out infinite; }
+  .batch-status-dot.ok  { background: #22c55e; }
+  .batch-status-dot.err { background: var(--error); }
+
+  .batch-modules-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .batch-mod-ok-card {
+    flex: 1 1 100%;
+    background: #0a1f10; border: 1px solid #166534; border-radius: 4px; overflow: hidden;
+  }
+  .batch-mod-ok-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; background: rgba(22,101,52,0.3);
+    border-bottom: 1px solid #166534;
+    font-size: 11px; font-weight: 700; color: #22c55e; font-family: var(--mono);
+  }
+  .batch-mod-ok-header::before { content: '✓ '; }
+  .batch-mod-ok-body { padding: 8px 12px; }
+  .batch-mod-ok-body pre {
+    font-family: var(--mono); font-size: 11px; color: var(--text);
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .batch-mod-ok-ped {
+    font-size: 10px; font-weight: 700; color: var(--ped);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  .batch-mod-err-card {
+    flex: 1 1 100%;
+    background: #1f0a0a; border: 1px solid #7f1d1d; border-radius: 4px; overflow: hidden;
+  }
+  .batch-mod-err-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; background: rgba(127,29,29,0.3);
+    border-bottom: 1px solid #7f1d1d;
+    font-size: 11px; font-weight: 700; color: var(--error); font-family: var(--mono);
+  }
+  .batch-mod-err-header::before { content: '✗ '; }
+  .batch-mod-err-body { padding: 8px 12px; }
+  .batch-mod-err-ped {
+    font-size: 10px; font-weight: 700; color: var(--ped);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .batch-mod-err-body pre {
+    font-family: var(--mono); font-size: 11px; color: var(--error);
+    white-space: pre-wrap; word-break: break-all;
+  }
+
+  .batch-file-fatal {
+    padding: 8px 14px; font-size: 11px; color: var(--error); font-family: var(--mono);
+  }
+
+  #batch-summary-bar {
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 16px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--muted); font-family: var(--mono);
+  }
+  #batch-summary-bar.visible { display: flex; }
+  .sum-ok  { color: #22c55e; }
+  .sum-err { color: var(--error); }
 </style>
 </head>
 <body>
@@ -227,6 +433,8 @@
   <input type="file" id="file-input">
   <button id="run-btn" disabled>▶ Ejecutar</button>
   <button id="clear-btn">Limpiar</button>
+  <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
+  <button id="batch-mode-btn">⊞ Proceso por Lotes</button>
   <div class="spacer"></div>
   <div id="status-wrap">
     <div id="status-dot"></div>
@@ -234,33 +442,68 @@
   </div>
 </header>
 
-<!-- Paneles fijos: Sintáctico, Pedimento, NorContribuciones, DTA -->
-<div id="fixed-grid">
-  <div class="panel" id="panel-sint">
-    <div class="ph"><span class="ph-title">Sintáctico</span><span class="ph-count" id="cnt-sint">0</span></div>
-    <div class="pb" id="out-sint"><div class="empty">Sin datos</div></div>
+<!-- ═══ Vista Individual ══════════════════════════════════════ -->
+<div id="single-view">
+
+  <!-- Paneles fijos: Sintáctico, Pedimento, NorContribuciones, DTA -->
+  <div id="fixed-grid">
+    <div class="panel" id="panel-sint">
+      <div class="ph"><span class="ph-title">Sintáctico</span><span class="ph-count" id="cnt-sint">0</span></div>
+      <div class="pb" id="out-sint"><div class="empty">Sin datos</div></div>
+    </div>
+    <div class="panel" id="panel-ped">
+      <div class="ph"><span class="ph-title">Pedimento</span><span class="ph-count" id="cnt-ped">0</span></div>
+      <div class="pb" id="out-ped"><div class="empty">Sin datos</div></div>
+    </div>
+    <div class="panel" id="panel-nor">
+      <div class="ph"><span class="ph-title">NorContribuciones</span><span class="ph-count" id="cnt-nor">0</span></div>
+      <div class="pb" id="out-nor"><div class="empty">Sin datos</div></div>
+    </div>
+    <div class="panel" id="panel-dta">
+      <div class="ph"><span class="ph-title">DTA / TCambio</span><span class="ph-count" id="cnt-dta">0</span></div>
+      <div class="pb" id="out-dta"><div class="empty">Sin datos</div></div>
+    </div>
   </div>
-  <div class="panel" id="panel-ped">
-    <div class="ph"><span class="ph-title">Pedimento</span><span class="ph-count" id="cnt-ped">0</span></div>
-    <div class="pb" id="out-ped"><div class="empty">Sin datos</div></div>
+
+  <!-- Paneles dinámicos: uno por módulo gRPC definido en modulos[] -->
+  <div id="modules-section"></div>
+
+  <!-- Bitácora -->
+  <div id="log-strip">
+    <div class="ph"><span class="ph-title">Bitácora</span><span class="ph-count" id="cnt-log">0</span></div>
+    <div id="log-out"></div>
   </div>
-  <div class="panel" id="panel-nor">
-    <div class="ph"><span class="ph-title">NorContribuciones</span><span class="ph-count" id="cnt-nor">0</span></div>
-    <div class="pb" id="out-nor"><div class="empty">Sin datos</div></div>
-  </div>
-  <div class="panel" id="panel-dta">
-    <div class="ph"><span class="ph-title">DTA / TCambio</span><span class="ph-count" id="cnt-dta">0</span></div>
-    <div class="pb" id="out-dta"><div class="empty">Sin datos</div></div>
-  </div>
+
 </div>
 
-<!-- Paneles dinámicos: uno por módulo gRPC definido en modulos[] -->
-<div id="modules-section"></div>
+<!-- ═══ Vista Batch ════════════════════════════════════════════ -->
+<div id="batch-view">
 
-<!-- Bitácora -->
-<div id="log-strip">
-  <div class="ph"><span class="ph-title">Bitácora</span><span class="ph-count" id="cnt-log">0</span></div>
-  <div id="log-out"></div>
+  <div id="batch-header">
+    <button id="batch-back-btn">← Volver</button>
+    <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
+    <label id="batch-file-label" for="batch-file-input">
+      📂 <span id="batch-file-name">Seleccionar archivos...</span>
+    </label>
+    <input type="file" id="batch-file-input" multiple>
+    <span id="batch-file-count"></span>
+    <button id="batch-run-btn" disabled>▶ Procesar Lote</button>
+    <button id="batch-clear-btn">Limpiar</button>
+  </div>
+
+  <div id="batch-progress"><div id="batch-progress-bar"></div></div>
+
+  <div id="batch-results">
+    <div class="empty" id="batch-empty">Selecciona archivos y pulsa "Procesar Lote"</div>
+  </div>
+
+  <div id="batch-summary-bar">
+    <span>Lote completado:</span>
+    <span id="batch-sum-ok" class="sum-ok"></span>
+    <span id="batch-sum-err" class="sum-err"></span>
+    <span id="batch-sum-total" style="margin-left:auto"></span>
+  </div>
+
 </div>
 
 <script>
@@ -538,6 +781,252 @@
     clearAll();
     setStatus('Listo', '');
   });
+
+  // ══════════════════════════════════════════════════════════════
+  // BATCH MODE
+  // ══════════════════════════════════════════════════════════════
+
+  const batch = {
+    files: null,
+    sse: null,
+    done: false,
+    total: 0,
+    processed: 0,
+    okCount: 0,
+    errCount: 0,
+    cards: {},
+  };
+
+  function showBatchView() {
+    document.body.style.height = 'auto';
+    document.body.style.overflowY = 'auto';
+    $('single-view').style.display = 'none';
+    $('batch-view').classList.add('active');
+    $('batch-mode-btn').classList.add('active');
+  }
+
+  function showSingleView() {
+    document.body.style.height = '100vh';
+    document.body.style.overflowY = 'hidden';
+    $('batch-view').classList.remove('active');
+    $('single-view').style.display = 'flex';
+    $('batch-mode-btn').classList.remove('active');
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function createFileCard(fileName, index, total) {
+    const card = document.createElement('div');
+    card.className = 'batch-file-card';
+    card.innerHTML =
+      '<div class="batch-file-header">' +
+        '<div class="batch-status-dot processing"></div>' +
+        '<span class="batch-file-name">' + escHtml(fileName) + '</span>' +
+        '<span class="batch-file-index">' + index + ' / ' + total + '</span>' +
+      '</div>' +
+      '<div class="batch-modules-row"></div>';
+    batch.cards[fileName] = card;
+    $('batch-results').appendChild(card);
+    $('batch-results').scrollTop = $('batch-results').scrollHeight;
+    return card;
+  }
+
+  function renderFileDone(summary, fatalError) {
+    const card = batch.cards[summary.file_name];
+    if (!card) return;
+    const dot = card.querySelector('.batch-status-dot');
+    const row = card.querySelector('.batch-modules-row');
+    row.innerHTML = '';
+
+    let fileHasErr = !!fatalError;
+
+    if (fatalError) {
+      const fatal = document.createElement('div');
+      fatal.className = 'batch-file-fatal';
+      fatal.textContent = '✗ Error fatal: ' + fatalError;
+      row.appendChild(fatal);
+    } else if (summary.modules) {
+      summary.modules.forEach(mod => {
+        const isErr = mod.overall_status === 'error';
+        if (isErr) fileHasErr = true;
+
+        const cardClass  = isErr ? 'batch-mod-err-card'   : 'batch-mod-ok-card';
+        const hdrClass   = isErr ? 'batch-mod-err-header'  : 'batch-mod-ok-header';
+        const bodyClass  = isErr ? 'batch-mod-err-body'    : 'batch-mod-ok-body';
+        const pedClass   = isErr ? 'batch-mod-err-ped'     : 'batch-mod-ok-ped';
+        const results    = isErr
+          ? (mod.results || []).filter(r => r.status === 'error')
+          : (mod.results || []);
+
+        const card = document.createElement('div');
+        card.className = cardClass;
+
+        const hdr = document.createElement('div');
+        hdr.className = hdrClass;
+        hdr.appendChild(document.createTextNode(mod.module));
+        card.appendChild(hdr);
+
+        const body = document.createElement('div');
+        body.className = bodyClass;
+
+        results.forEach(r => {
+          if (r.pedimento) {
+            const pedLbl = document.createElement('div');
+            pedLbl.className = pedClass;
+            pedLbl.textContent = 'Pedimento ' + r.pedimento;
+            body.appendChild(pedLbl);
+          }
+          const pre = document.createElement('pre');
+          pre.textContent = typeof r.data === 'string'
+            ? r.data
+            : JSON.stringify(r.data, null, 2);
+          body.appendChild(pre);
+        });
+
+        card.appendChild(body);
+        row.appendChild(card);
+      });
+    }
+
+    dot.classList.remove('processing');
+    dot.classList.add(fileHasErr ? 'err' : 'ok');
+    return fileHasErr;
+  }
+
+  function clearBatchResults() {
+    if (batch.sse) { batch.sse.close(); batch.sse = null; }
+    batch.done = false;
+    batch.processed = 0;
+    batch.okCount = 0;
+    batch.errCount = 0;
+    batch.cards = {};
+    $('batch-results').innerHTML = '<div class="empty" id="batch-empty">Selecciona archivos y pulsa "Procesar Lote"</div>';
+    $('batch-progress-bar').style.width = '0%';
+    $('batch-summary-bar').classList.remove('visible');
+  }
+
+  async function startBatch() {
+    if (!batch.files || batch.files.length === 0) return;
+    if (batch.sse) { batch.sse.close(); batch.sse = null; }
+
+    clearBatchResults();
+
+    $('batch-run-btn').disabled = true;
+    setStatus('Subiendo archivos...', 'running');
+
+    let token;
+    try {
+      const form = new FormData();
+      for (const f of batch.files) form.append('files', f);
+      const res = await fetch('/api/batch-upload', { method: 'POST', body: form });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('HTTP ' + res.status + ': ' + txt.trim());
+      }
+      const json = await res.json();
+      token = json.token;
+      batch.total = json.count;
+      if (!token) throw new Error('servidor no devolvió token');
+    } catch (e) {
+      setStatus('Error al subir: ' + e.message, 'error');
+      $('batch-run-btn').disabled = false;
+      return;
+    }
+
+    const emptyEl = $('batch-empty');
+    if (emptyEl) emptyEl.remove();
+
+    setStatus('Procesando 0 / ' + batch.total + '...', 'running');
+
+    batch.sse = new EventSource('/api/batch-run?token=' + encodeURIComponent(token));
+
+    batch.sse.addEventListener('batch_file_start', e => {
+      const ev = JSON.parse(e.data);
+      const d = ev.data;
+      createFileCard(d.file_name, d.index, d.total);
+      setStatus('Procesando ' + d.index + ' / ' + d.total + ': ' + d.file_name, 'running');
+    });
+
+    batch.sse.addEventListener('batch_file_done', e => {
+      const ev = JSON.parse(e.data);
+      const d = ev.data;
+      batch.processed++;
+      const hadErr = renderFileDone(d.summary, d.error || '');
+      if (hadErr) batch.errCount++; else batch.okCount++;
+      const pct = Math.round((batch.processed / batch.total) * 100);
+      $('batch-progress-bar').style.width = pct + '%';
+      setStatus('Procesando ' + batch.processed + ' / ' + batch.total + '...', 'running');
+    });
+
+    batch.sse.addEventListener('batch_done', () => {
+      batch.done = true;
+      if (batch.sse) { batch.sse.close(); batch.sse = null; }
+      $('batch-run-btn').disabled = false;
+      $('batch-progress-bar').style.width = '100%';
+
+      const bar = $('batch-summary-bar');
+      bar.classList.add('visible');
+      $('batch-sum-ok').textContent  = '✓ ' + batch.okCount + ' OK';
+      $('batch-sum-err').textContent = batch.errCount > 0 ? '✗ ' + batch.errCount + ' con errores' : '';
+      $('batch-sum-total').textContent = batch.total + ' archivos totales';
+
+      setStatus(
+        batch.errCount > 0
+          ? 'Lote completo: ' + batch.okCount + ' OK, ' + batch.errCount + ' con errores'
+          : 'Lote completado: ' + batch.total + ' archivos OK',
+        batch.errCount > 0 ? 'error' : 'done'
+      );
+    });
+
+    batch.sse.addEventListener('done', () => {
+      if (!batch.done) {
+        if (batch.sse) { batch.sse.close(); batch.sse = null; }
+        $('batch-run-btn').disabled = false;
+        setStatus('Stream cerrado inesperadamente', 'error');
+      }
+    });
+
+    batch.sse.onerror = () => {
+      if (!batch.done) {
+        setStatus('Error de conexión SSE', 'error');
+        $('batch-run-btn').disabled = false;
+      }
+    };
+  }
+
+  $('batch-mode-btn').addEventListener('click', showBatchView);
+  $('batch-back-btn').addEventListener('click', showSingleView);
+  $('batch-run-btn').addEventListener('click', startBatch);
+
+  $('batch-file-input').addEventListener('change', () => {
+    batch.files = $('batch-file-input').files;
+    const n = batch.files ? batch.files.length : 0;
+    if (n > 0) {
+      $('batch-file-name').textContent = n === 1 ? batch.files[0].name : n + ' archivos seleccionados';
+      $('batch-file-label').classList.add('ready');
+      $('batch-file-count').textContent = '';
+      $('batch-run-btn').disabled = false;
+    } else {
+      $('batch-file-name').textContent = 'Seleccionar archivos...';
+      $('batch-file-label').classList.remove('ready');
+      $('batch-run-btn').disabled = true;
+    }
+  });
+
+  $('batch-clear-btn').addEventListener('click', () => {
+    clearBatchResults();
+    batch.files = null;
+    $('batch-file-input').value = '';
+    $('batch-file-name').textContent = 'Seleccionar archivos...';
+    $('batch-file-label').classList.remove('ready');
+    $('batch-run-btn').disabled = true;
+    setStatus('Listo', '');
+  });
+
 })();
 </script>
 </body>
