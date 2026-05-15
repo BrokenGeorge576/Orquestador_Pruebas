@@ -24,7 +24,7 @@ type PedimentoContext struct {
 
 func main() {
 	urlSintactico := "https://prevalidador.appsrvr.dev/validacion-sintactica"
-	archivo := "/mnt/c/Users/DesarrolloGUAS/Documents/archivos_mas_de_un_pedimento/m1617659.264"
+	archivo := "m1609906.265"
 
 	fmt.Printf("Conectando a Sintáctica (%s)...\n", urlSintactico)
 	resultadoSintactica, err := grpcclient.ProcessRestSintactica(urlSintactico, archivo)

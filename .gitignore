@@ -6,6 +6,7 @@
 *.dylib
 *.test
 *.out
+*.265
 
 # Entornos de desarrollo y editores (como Zed, VSCode, etc.)
 .idea/
