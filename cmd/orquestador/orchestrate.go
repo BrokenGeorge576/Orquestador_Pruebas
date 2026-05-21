@@ -14,7 +14,7 @@ import (
 
 const (
 	urlSintactico = "https://prevalidador.appsrvr.dev/validacion-sintactica"
-	urlLegacy     = "https://prevalidador-api.appsrvr.dev/nor-contribucion"
+	urlLegacy     = "172.16.170.30:50054"
 )
 
 type ModuleConfig struct {
@@ -75,19 +75,6 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 	}
 	logf("[OK] Documento extraído (%d pedimento(s))", len(resultadoArr))
 
-	logf("Consultando NorContribuciones (%s)...", urlLegacy)
-	catalogoTCambios, err := grpcclient.ProcessLegacyTCambio(urlLegacy, archivo)
-	if err != nil {
-		logf("ERROR: Fallo en NorContribuciones: %v", err)
-		return fmt.Errorf("fallo en NorContribuciones: %w", err)
-	}
-
-	writer.Write(orchestrator.PanelEvent{
-		Type: orchestrator.EventNorContrib,
-		Data: catalogoTCambios,
-	})
-	logf("[OK] Datos de NorContribuciones recibidos")
-
 	var pedimentosAProcesar []PedimentoContext
 
 	for _, resItem := range resultadoArr {
@@ -101,8 +88,12 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 		numeroPedFloat := inicioPed["NumeroPed"].(float64)
 		numeroPedStr := strconv.FormatFloat(numeroPedFloat, 'f', 0, 64)
 
+		logf("Consultando NorContribuciones para pedimento %s...", numeroPedStr)
 		dtaData := map[string]interface{}{}
-		if extras, existe := catalogoTCambios[numeroPedStr]; existe {
+		extras, err := grpcclient.ProcessGRPCTCambio(urlLegacy, documento)
+		if err != nil {
+			logf("ADVERTENCIA: TCambio falló para pedimento %s: %v", numeroPedStr, err)
+		} else {
 			if tcambio, ok := extras["TCambio"]; ok {
 				documento["TCambio"] = tcambio
 				dtaData["TCambio"] = tcambio
@@ -111,6 +102,12 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 				documento["DtaPartidas"] = dta
 				dtaData["DtaPartidas"] = dta
 			}
+			writer.Write(orchestrator.PanelEvent{
+				Type:      orchestrator.EventNorContrib,
+				Pedimento: numeroPedStr,
+				Data:      extras,
+			})
+			logf("[OK] NorContribuciones recibido para pedimento %s", numeroPedStr)
 		}
 
 		writer.Write(orchestrator.PanelEvent{
@@ -169,8 +166,8 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 
 				if err != nil {
 					writer.Write(orchestrator.PanelEvent{
-						Type:      orchestrator.EventLog,
-						Data:      fmt.Sprintf("ADVERTENCIA: módulo '%s' falló (%s): %v", m.Name, m.Host, err),
+						Type: orchestrator.EventLog,
+						Data: fmt.Sprintf("ADVERTENCIA: módulo '%s' falló (%s): %v", m.Name, m.Host, err),
 					})
 					writer.Write(orchestrator.PanelEvent{
 						Type:      orchestrator.EventModule,
@@ -180,8 +177,8 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 					})
 				} else {
 					writer.Write(orchestrator.PanelEvent{
-						Type:      orchestrator.EventLog,
-						Data:      fmt.Sprintf("[OK] Módulo '%s' — resultado recibido (ped. %s)", m.Name, numPed),
+						Type: orchestrator.EventLog,
+						Data: fmt.Sprintf("[OK] Módulo '%s' — resultado recibido (ped. %s)", m.Name, numPed),
 					})
 					writer.Write(orchestrator.PanelEvent{
 						Type:      orchestrator.EventModule,
