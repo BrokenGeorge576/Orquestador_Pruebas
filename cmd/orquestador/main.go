@@ -24,7 +24,8 @@ type PedimentoContext struct {
 
 func main() {
 	urlSintactico := "https://prevalidador.appsrvr.dev/validacion-sintactica"
-	archivo := "m1609906.265"
+	urlLegacy := "172.16.170.30:50054"
+	archivo := "m3488735.267"
 
 	fmt.Printf("Conectando a Sintáctica (%s)...\n", urlSintactico)
 	resultadoSintactica, err := grpcclient.ProcessRestSintactica(urlSintactico, archivo)
@@ -42,15 +43,7 @@ func main() {
 		log.Fatalf("Error: No se encontró 'Resultado' o está vacío.\n")
 	}
 
-	fmt.Println("[OK] Documento extraido.\n")
-
-	urlLegacy := "https://prevalidador-api.appsrvr.dev/nor-contribucion"
-	fmt.Printf("Consultando para datos extra (%s)...\n", urlLegacy)
-	catalogoTCambios, err := grpcclient.ProcessLegacyTCambio(urlLegacy, archivo)
-	if err != nil {
-		log.Fatalf("Fallo al procesar Simplificados: %v\n", err)
-	}
-	fmt.Println("[OK] Datos extras anexados exitosamente.\n")
+	fmt.Println("[OK] Documento extraído.\n")
 
 	var pedimentosAProcesar []PedimentoContext
 
@@ -65,14 +58,21 @@ func main() {
 		numeroPedFloat := inicioPed["NumeroPed"].(float64)
 		numeroPedStr := strconv.FormatFloat(numeroPedFloat, 'f', 0, 64)
 
-		if extras, existe := catalogoTCambios[numeroPedStr]; existe {
+		// --- NUEVA LÓGICA: Llamada gRPC a TCambio por cada pedimento ---
+		fmt.Printf("Consultando NorContribuciones/TCambio para pedimento %s (%s)...\n", numeroPedStr, urlLegacy)
+		extras, err := grpcclient.ProcessGRPCTCambio(urlLegacy, documento)
+		if err != nil {
+			fmt.Printf("[ADVERTENCIA] TCambio falló para pedimento %s: %v\n", numeroPedStr, err)
+		} else {
 			if tcambio, ok := extras["TCambio"]; ok {
 				documento["TCambio"] = tcambio
 			}
 			if dta, ok := extras["DtaPartidas"]; ok {
 				documento["DtaPartidas"] = dta
 			}
+			fmt.Printf("[OK] NorContribuciones recibido para pedimento %s\n", numeroPedStr)
 		}
+		// ---------------------------------------------------------------
 
 		var estadoSint interface{}
 		if estados, ok := resMap["Estado"].([]interface{}); ok && len(estados) > 0 {
@@ -94,7 +94,7 @@ func main() {
 		},
 	}
 
-	fmt.Println("Iniciando procesamiento de módulo")
+	fmt.Println("\nIniciando procesamiento de módulo")
 
 	for i, ped := range pedimentosAProcesar {
 		fmt.Printf("\n>>> Procesando Pedimento %d de %d (Pedimento: %s) <<<\n", i+1, len(pedimentosAProcesar), ped.NumeroPedStr)
@@ -108,7 +108,7 @@ func main() {
 			fmt.Println(string(docJSON))
 			fmt.Println("============================================")
 		}
-		// Fin de debug
+
 		var wg sync.WaitGroup
 		var mu sync.Mutex
 		resultadosFinales := make(map[string]interface{})
