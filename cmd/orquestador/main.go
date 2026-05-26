@@ -24,8 +24,9 @@ type PedimentoContext struct {
 
 func main() {
 	urlSintactico := "https://prevalidador.appsrvr.dev/validacion-sintactica"
+	urlNorContribucion := "https://prevalidador-api.appsrvr.dev/nor-contribucion"
 	urlLegacy := "172.16.170.30:50054"
-	archivo := "m3488735.267"
+	archivo := "m1609906.265"
 
 	fmt.Printf("Conectando a Sintáctica (%s)...\n", urlSintactico)
 	resultadoSintactica, err := grpcclient.ProcessRestSintactica(urlSintactico, archivo)
@@ -45,6 +46,15 @@ func main() {
 
 	fmt.Println("[OK] Documento extraído.\n")
 
+	fmt.Printf("Consultando NorContribucion (%s)...\n", urlNorContribucion)
+	dtaPorPedimento, err := grpcclient.ProcessRestNorContribucion(urlNorContribucion, archivo)
+	if err != nil {
+		fmt.Printf("[ADVERTENCIA] NorContribucion falló: %v\n", err)
+		dtaPorPedimento = make(map[string]grpcclient.DtaPartidas)
+	} else {
+		fmt.Printf("[OK] NorContribucion recibido (%d pedimentos con DTA).\n\n", len(dtaPorPedimento))
+	}
+
 	var pedimentosAProcesar []PedimentoContext
 
 	for _, resItem := range resultadoArr {
@@ -58,7 +68,6 @@ func main() {
 		numeroPedFloat := inicioPed["NumeroPed"].(float64)
 		numeroPedStr := strconv.FormatFloat(numeroPedFloat, 'f', 0, 64)
 
-		// --- NUEVA LÓGICA: Llamada gRPC a TCambio por cada pedimento ---
 		fmt.Printf("Consultando NorContribuciones/TCambio para pedimento %s (%s)...\n", numeroPedStr, urlLegacy)
 		extras, err := grpcclient.ProcessGRPCTCambio(urlLegacy, documento)
 		if err != nil {
@@ -72,7 +81,19 @@ func main() {
 			}
 			fmt.Printf("[OK] NorContribuciones recibido para pedimento %s\n", numeroPedStr)
 		}
-		// ---------------------------------------------------------------
+
+		if dtaPartidas, found := dtaPorPedimento[numeroPedStr]; found {
+			dtaBytes, err := json.Marshal(dtaPartidas)
+			if err == nil {
+				var dtaMap map[string]interface{}
+				if err := json.Unmarshal(dtaBytes, &dtaMap); err == nil {
+					documento["DtaPartidas"] = dtaMap
+					fmt.Printf("[OK] DtaPartidas (nor-contribucion) insertado en pedimento %s\n", numeroPedStr)
+				}
+			}
+		} else {
+			fmt.Printf("[ADVERTENCIA] No se encontró nodo DTA en NorContribucion para pedimento %s\n", numeroPedStr)
+		}
 
 		var estadoSint interface{}
 		if estados, ok := resMap["Estado"].([]interface{}); ok && len(estados) > 0 {
@@ -88,9 +109,9 @@ func main() {
 
 	modulos := []ModuleConfig{
 		{
-			Name:       "Fracciones",
-			Host:       "localhost:50053",
-			MethodName: "/apigrpc.FraccionesService/Fracciones",
+			Name:       "IVA",
+			Host:       "localhost:50051",
+			MethodName: "/apigrpc.IvaService/Iva",
 		},
 	}
 
@@ -99,7 +120,6 @@ func main() {
 	for i, ped := range pedimentosAProcesar {
 		fmt.Printf("\n>>> Procesando Pedimento %d de %d (Pedimento: %s) <<<\n", i+1, len(pedimentosAProcesar), ped.NumeroPedStr)
 
-		// Debug del pedimento
 		docJSON, err := json.MarshalIndent(ped.Documento, "", "  ")
 		if err != nil {
 			fmt.Printf("[ADVERTENCIA] No se pudo serializar el pedimento %s para debug: %v\n", ped.NumeroPedStr, err)

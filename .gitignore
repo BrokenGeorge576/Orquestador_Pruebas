@@ -7,6 +7,8 @@
 *.test
 *.out
 *.265
+*txt
+*.267
 
 # Entornos de desarrollo y editores (como Zed, VSCode, etc.)
 .idea/
