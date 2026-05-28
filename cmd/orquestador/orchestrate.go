@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"orquestador_p/internal/grpcclient"
 	"orquestador_p/internal/orchestrator"
@@ -159,7 +160,13 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 			wg.Add(1)
 			go func(m ModuleConfig, doc map[string]interface{}, numPed string) {
 				defer wg.Done()
+				start := time.Now()
 				res, err := grpcclient.ProcessDynamicModule(m.Host, m.MethodName, doc)
+
+				// Reenvía a la Bitácora los logs del lado servidor del contenedor del módulo.
+				// El writer es goroutine-safe, así que se hace fuera del mutex para no
+				// serializar la captura (docker logs) entre módulos paralelos.
+				captureModuleLogs(m, start, writer)
 
 				mu.Lock()
 				defer mu.Unlock()
