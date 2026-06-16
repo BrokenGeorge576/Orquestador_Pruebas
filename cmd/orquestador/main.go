@@ -26,7 +26,7 @@ func main() {
 	urlSintactico := "https://prevalidador.appsrvr.dev/validacion-sintactica"
 	urlNorContribucion := "https://prevalidador-api.appsrvr.dev/nor-contribucion"
 	urlLegacy := "172.16.170.30:50054"
-	archivo := "m1609906.265"
+	archivo := "m1698175.267"
 
 	fmt.Printf("Conectando a Sintáctica (%s)...\n", urlSintactico)
 	resultadoSintactica, err := grpcclient.ProcessRestSintactica(urlSintactico, archivo)

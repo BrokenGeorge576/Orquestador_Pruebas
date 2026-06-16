@@ -1,0 +1,378 @@
+{
+    "CFDIs": [
+        {
+            "CPProvComp": "528010",
+            "CalleProvComp": "BLOCK C, VANKE FINANCE CENTRE, JIHUA 5TH ROAD, CHANCHENG DISTRICT, FOSHAN CITY",
+            "FecCFDI": "2024-08-21T00:00:00-06:00",
+            "IdenFiscalProvComp": "9144060467886577XU",
+            "LineaArchivo": 10,
+            "LineaPedimento": 10,
+            "MonedaCFDI": "USD",
+            "MunicipioProvComp": "GUANDONG PROVINCE",
+            "NombProvComp": "Foshan Castel Importing \u0026 Exporting Co., Ltd.",
+            "NumCFDI": "COVE2471PKVC3",
+            "NumExtProvComp": "57",
+            "NumIntProvComp": "ROOM 1106",
+            "PaisCFDI": "CHN",
+            "TerminoFac": "FOB",
+            "ValorDlls": 62886.75,
+            "ValorMonedaCFDI": 62886.75
+        }
+    ],
+    "Contenedores": [
+        {
+            "LineaArchivo": 5,
+            "LineaPedimento": 5,
+            "NumContenedor": "TCNU3194348",
+            "TipoContenedor": 3
+        },
+        {
+            "LineaArchivo": 6,
+            "LineaPedimento": 6,
+            "NumContenedor": "UETU6645354",
+            "TipoContenedor": 3
+        },
+        {
+            "LineaArchivo": 7,
+            "LineaPedimento": 7,
+            "NumContenedor": "MRKU2783552",
+            "TipoContenedor": 3
+        },
+        {
+            "LineaArchivo": 8,
+            "LineaPedimento": 8,
+            "NumContenedor": "TCKU7312064",
+            "TipoContenedor": 3
+        },
+        {
+            "LineaArchivo": 9,
+            "LineaPedimento": 9,
+            "NumContenedor": "TCNU8329493",
+            "TipoContenedor": 3
+        }
+    ],
+    "ContribGrales": [
+        {
+            "CveContribGral": 1,
+            "Importes": [
+                {
+                    "CveFP": 0,
+                    "Importe": 12510,
+                    "LineaArchivo": 23,
+                    "LineaPedimento": 23
+                }
+            ],
+            "TasasContribGral": [
+                {
+                    "CveTasa": 7,
+                    "LineaArchivo": 20,
+                    "LineaPedimento": 20,
+                    "Tasa": 8
+                }
+            ]
+        },
+        {
+            "CveContribGral": 15,
+            "Importes": [
+                {
+                    "CveFP": 0,
+                    "Importe": 290,
+                    "LineaArchivo": 24,
+                    "LineaPedimento": 24
+                }
+            ],
+            "TasasContribGral": [
+                {
+                    "CveTasa": 2,
+                    "LineaArchivo": 21,
+                    "LineaPedimento": 21,
+                    "Tasa": 290
+                }
+            ]
+        },
+        {
+            "CveContribGral": 23,
+            "Importes": [
+                {
+                    "CveFP": 0,
+                    "Importe": 46,
+                    "LineaArchivo": 25,
+                    "LineaPedimento": 25
+                }
+            ],
+            "TasasContribGral": [
+                {
+                    "CveTasa": 1,
+                    "LineaArchivo": 22,
+                    "LineaPedimento": 22,
+                    "Tasa": 16
+                }
+            ]
+        }
+    ],
+    "DatosGralesPed": {
+        "AduEntSal": 160,
+        "CalleDomicilio": "PROLONGACION FULTON",
+        "CodPostalDomicilio": "54060",
+        "CurpAgeORepre": "AOGM850118HJCRNR02",
+        "CvePed": "A1",
+        "DecremCarga": 0,
+        "DecremDescarga": 0,
+        "DecremFletes": 0,
+        "DecremOtros": 0,
+        "DecremSeguros": 0,
+        "EntidadFederativaDomicilio": "EM",
+        "ImpPagoEmbalajes": 0,
+        "ImpPagoFletes": 85784,
+        "ImpPagoOtrosIncrem": 0,
+        "ImpPagoSeguros": 0,
+        "LineaArchivo": 2,
+        "LineaPedimento": 2,
+        "MedTranspArriboAdu": 1,
+        "MedTranspEntSalPais": 1,
+        "MedTranspSalAdu": 3,
+        "MunicipioDomicilio": "Tlalnepantla de Baz",
+        "NombreImpExp": "LETSAC MEXICO, S. DE R. L. DE C. V.",
+        "NumExteriorDomicilio": "2",
+        "NumInteriorDomicilio": "BODEGA B",
+        "OrigenDestino": 9,
+        "PaisDomicilio": "MEX",
+        "PesoBruto": 75016,
+        "RfcFactura": "MAM990513H56",
+        "RfcImpExp": "LME0504155P5",
+        "TipoCambio": 19.2773,
+        "TipoOper": 1,
+        "UsoFuturo": "0"
+    },
+    "DtaPartidas": {
+        "DtaActualiza": false,
+        "FactorActualizacion": 1,
+        "FechaAplica": "2024-09-21",
+        "Partidas": [
+            {
+                "FraccionArancelaria": "69109001",
+                "IncluyeAlMillar": true,
+                "IncluyeCertificadoElegibilidad": false,
+                "IncluyeCodigoGenerico": false,
+                "IncluyeTratadosComerciales": false,
+                "IncluyeTratadosCuotaFija": false,
+                "NumPartida": "1",
+                "PaisOrigenDestinoMex": false
+            }
+        ],
+        "TipoDta": ["8", -2125]
+    },
+    "Fechas": [
+        {
+            "Fecha": "2024-09-21T00:00:00-06:00",
+            "LineaArchivo": 11,
+            "LineaPedimento": 11,
+            "TipoFecha": 1
+        },
+        {
+            "Fecha": "2024-09-23T00:00:00-06:00",
+            "LineaArchivo": 12,
+            "LineaPedimento": 12,
+            "TipoFecha": 2
+        }
+    ],
+    "FirmaPed": {
+        "CveTipoFigura": 1,
+        "Efirma": "btQOuC4nYwgGFkKJw8F0DMPVdUonEI9JbbNWczbsvmYO3HAwxHfFhBS7SRceFusFHWnK+zdyRqJhla5c9ZeECxrWoAKwcuqCHVM3ZUmh+tTmz1WeLwnanwuiwG7uu1p9wJ6GbNYyOhhK0UloSQn6L/Fr58fNINqyDduhptIeY8/999qOMroW3a2b01b3BLjSIoP2wDCH/r3fFmLCE7yRPI1A+T6wTU6zWyLWV9AsBwk0pVPN0vSEUBNGaXG2Dmw3hpI3CyiCVnjIbhmMylfIQL1rn1chrLDLxwUHBHhSDccm9KWGN12opyXZRSXbS5Vzu5T57rDDpVhqUxp717yLHw==",
+        "LineaArchivo": 38,
+        "NumSerieCert": "00001000000704430221"
+    },
+    "Guias": [
+        {
+            "IdenGuia": "M",
+            "LineaArchivo": 4,
+            "LineaPedimento": 4,
+            "NumGuia": "243162769"
+        }
+    ],
+    "IdentifPed": [
+        {
+            "Comple1": "39",
+            "Comple3": null,
+            "CveIdent": "CR",
+            "LineaArchivo": 13,
+            "LineaPedimento": 13
+        },
+        {
+            "Comple1": "0192240Y35P46",
+            "Comple3": null,
+            "CveIdent": "ED",
+            "LineaArchivo": 14,
+            "LineaPedimento": 14
+        },
+        {
+            "Comple1": "0436240IS5F53",
+            "Comple3": null,
+            "CveIdent": "ED",
+            "LineaArchivo": 15,
+            "LineaPedimento": 15
+        },
+        {
+            "Comple1": "04382411DE697",
+            "Comple3": null,
+            "CveIdent": "ED",
+            "LineaArchivo": 16,
+            "LineaPedimento": 16
+        },
+        {
+            "Comple1": "O",
+            "Comple3": null,
+            "CveIdent": "IC",
+            "LineaArchivo": 17,
+            "LineaPedimento": 17
+        },
+        {
+            "Comple1": "5",
+            "Comple3": null,
+            "CveIdent": "PD",
+            "LineaArchivo": 18,
+            "LineaPedimento": 18
+        },
+        {
+            "Comple1": "AA",
+            "Comple3": null,
+            "CveIdent": "SO",
+            "LineaArchivo": 19,
+            "LineaPedimento": 19
+        }
+    ],
+    "InicioPed": {
+        "AduDesp": 160,
+        "LineaArchivo": 1,
+        "LineaPedimento": 1,
+        "NomArch": "m1698175.267",
+        "NumeroPed": 4001628,
+        "Patente": 1698,
+        "TipoMov": 1,
+        "TipoPed": 1
+    },
+    "ObservaGrales": [
+        {
+            "LineaArchivo": 26,
+            "LineaPedimento": 26,
+            "Observaciones": "SE ANEXA BL REVALIDADO, CERTIFICADOS NOMS Y CARTA DE LA REGLA 3.1.8; DE CONFORMIDAD CON EL ART.36 Y 36-A FRACCION I DE L"
+        },
+        {
+            "LineaArchivo": 27,
+            "LineaPedimento": 27,
+            "Observaciones": "A LEY ADUANERA.  OPERACIÓN DE CONFORMIDAD CON LA REGLA 3.1.21 FRACCIÓN II INCISO A DE LAS RGCE VIGENTES.  - - Relacion d"
+        },
+        {
+            "LineaArchivo": 28,
+            "LineaPedimento": 28,
+            "Observaciones": "e facturas - - FACTR: Foshan Castel Importing \u0026 Exporting Co., Ltd.,9144060467886577XU,FC24-T126,21-08-2024,COVE2471PKVC"
+        },
+        {
+            "LineaArchivo": 29,
+            "LineaPedimento": 29,
+            "Observaciones": "3,USD,62,886.750"
+        }
+    ],
+    "Partidas": [
+        {
+            "CantUMC": 2195,
+            "CantUMT": 68431,
+            "ContribPart": [
+                {
+                    "CveContribPart": 3,
+                    "Importes": [
+                        {
+                            "CveFP": 0,
+                            "Importe": 282385,
+                            "LineaArchivo": 36,
+                            "LineaPedimento": 36
+                        }
+                    ],
+                    "TasasContribPart": [
+                        {
+                            "CveTasa": 1,
+                            "LineaArchivo": 34,
+                            "LineaPedimento": 34,
+                            "Tasa": 16
+                        }
+                    ]
+                },
+                {
+                    "CveContribPart": 6,
+                    "Importes": [
+                        {
+                            "CveFP": 0,
+                            "Importe": 454325,
+                            "LineaArchivo": 37,
+                            "LineaPedimento": 37
+                        }
+                    ],
+                    "TasasContribPart": [
+                        {
+                            "CveTasa": 1,
+                            "LineaArchivo": 35,
+                            "LineaPedimento": 35,
+                            "Tasa": 35
+                        }
+                    ]
+                }
+            ],
+            "CveUMC": 6,
+            "CveUMT": 1,
+            "DescMerc": "INODOROS",
+            "Fraccion": 69109001,
+            "IdentifPart": [
+                {
+                    "Comple1": "O",
+                    "Comple3": null,
+                    "CveIdent": "UM",
+                    "LineaArchivo": 32,
+                    "LineaPedimento": 32
+                },
+                {
+                    "Comple1": "N",
+                    "Comple3": null,
+                    "CveIdent": "ES",
+                    "LineaArchivo": 33,
+                    "LineaPedimento": 33
+                }
+            ],
+            "LineaArchivo": 30,
+            "LineaPedimento": 30,
+            "MetodoValoracion": 1,
+            "NumPartida": 1,
+            "PaisOrigDest": "CHN",
+            "PaisVendComp": "CHN",
+            "Permisos": [
+                {
+                    "CvePerm": "NM",
+                    "FirmaoCertifoAut": "CMC2300001477",
+                    "LineaArchivo": 31,
+                    "LineaPedimento": 31,
+                    "NumPerm": "NOM-002-CONAGUA-2021"
+                }
+            ],
+            "PrecioUnitario": 552.29476,
+            "Subdivision": 0,
+            "ValAduana": 1298071,
+            "ValComercial": 1212287,
+            "ValDlls": 62886.75,
+            "Vinculacion": 0
+        }
+    ],
+    "TCambio": {
+        "FAplica": "2024-09-21",
+        "Factor": 1,
+        "TipoCambio": 19.2773
+    },
+    "Transporte": [
+        {
+            "IdentTransp": "MAERSK",
+            "LineaArchivo": 3,
+            "LineaPedimento": 3,
+            "NomTransp": "MAERSKEMERALDV434E",
+            "PaisMedTransp": "SGP",
+            "TotBultos": 0
+        }
+    ]
+}

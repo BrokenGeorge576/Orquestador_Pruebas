@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -31,7 +32,7 @@ type DtaPartidaItem struct {
 type DtaPartidas struct {
 	FechaAplica         string           `json:"FechaAplica"`
 	DtaActualiza        bool             `json:"DtaActualiza"`
-	FactorActualizacion string           `json:"FactorActualizacion"`
+	FactorActualizacion float64          `json:"FactorActualizacion"`
 	TipoDta             []any            `json:"TipoDta"`
 	Partidas            []DtaPartidaItem `json:"Partidas"`
 }
@@ -137,10 +138,14 @@ func ProcessRestNorContribucion(targetUrl string, filePath string) (map[string]D
 				})
 			}
 
+			factoractual, err := strconv.ParseFloat(dta.FactorActualizacion, 64)
+			if err != nil {
+				factoractual = 0
+			}
 			resultado[item.Pedimento] = DtaPartidas{
 				FechaAplica:         dta.FechaAplica,
 				DtaActualiza:        dta.DtaActualiza,
-				FactorActualizacion: dta.FactorActualizacion,
+				FactorActualizacion: factoractual,
 				TipoDta:             dta.TipoDta,
 				Partidas:            partidas,
 			}
