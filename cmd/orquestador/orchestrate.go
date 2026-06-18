@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -13,8 +14,9 @@ import (
 )
 
 const (
-	urlSintactico = "https://prevalidador.appsrvr.dev/validacion-sintactica"
-	urlLegacy     = "172.16.170.30:50054"
+	urlSintactico      = "https://prevalidador.appsrvr.dev/validacion-sintactica"
+	urlNorContribucion = "https://prevalidador-api.appsrvr.dev/nor-contribucion"
+	urlLegacy          = "172.16.170.30:50054"
 )
 
 type ModuleConfig struct {
@@ -32,9 +34,9 @@ type PedimentoContext struct {
 // Agregar módulos aquí genera automáticamente un panel nuevo en la interfaz web.
 var modulos = []ModuleConfig{
 	{
-		Name:       "Simplificados",
+		Name:       "IVA",
 		Host:       "localhost:50051",
-		MethodName: "/apigrpc.SIMPLIFICADOS/SIMPLIFICADOS",
+		MethodName: "/apigrpc.IvaService/Iva",
 	},
 }
 
@@ -75,6 +77,15 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 	}
 	logf("[OK] Documento extraído (%d pedimento(s))", len(resultadoArr))
 
+	logf("Consultando NorContribucion (%s)...", urlNorContribucion)
+	dtaPorPedimento, err := grpcclient.ProcessRestNorContribucion(urlNorContribucion, archivo)
+	if err != nil {
+		logf("ADVERTENCIA: NorContribucion falló: %v", err)
+		dtaPorPedimento = make(map[string]grpcclient.DtaPartidas)
+	} else {
+		logf("[OK] NorContribucion recibido (%d pedimentos con DTA)", len(dtaPorPedimento))
+	}
+
 	var pedimentosAProcesar []PedimentoContext
 
 	for _, resItem := range resultadoArr {
@@ -88,7 +99,7 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 		numeroPedFloat := inicioPed["NumeroPed"].(float64)
 		numeroPedStr := strconv.FormatFloat(numeroPedFloat, 'f', 0, 64)
 
-		logf("Consultando NorContribuciones para pedimento %s...", numeroPedStr)
+		logf("Consultando NorContribuciones/TCambio para pedimento %s...", numeroPedStr)
 		dtaData := map[string]interface{}{}
 		extras, err := grpcclient.ProcessGRPCTCambio(urlLegacy, documento)
 		if err != nil {
@@ -107,7 +118,21 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 				Pedimento: numeroPedStr,
 				Data:      extras,
 			})
-			logf("[OK] NorContribuciones recibido para pedimento %s", numeroPedStr)
+			logf("[OK] NorContribuciones/TCambio recibido para pedimento %s", numeroPedStr)
+		}
+
+		if dtaPartidas, found := dtaPorPedimento[numeroPedStr]; found {
+			dtaBytes, err := json.Marshal(dtaPartidas)
+			if err == nil {
+				var dtaMap map[string]interface{}
+				if err := json.Unmarshal(dtaBytes, &dtaMap); err == nil {
+					documento["DtaPartidas"] = dtaMap
+					dtaData["DtaPartidas"] = dtaMap
+					logf("[OK] DtaPartidas (nor-contribucion) insertado en pedimento %s", numeroPedStr)
+				}
+			}
+		} else {
+			logf("ADVERTENCIA: No se encontró nodo DTA en NorContribucion para pedimento %s", numeroPedStr)
 		}
 
 		writer.Write(orchestrator.PanelEvent{

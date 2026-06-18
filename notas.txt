@@ -1,0 +1,5 @@
+Agregar
+201.164.155.25 prevalidador.appsrvr.dev
+201.164.155.25 prevalidador-api.appsrvr.dev
+
+en sudo nano/etc/hosts
