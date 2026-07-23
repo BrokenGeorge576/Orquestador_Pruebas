@@ -15,6 +15,7 @@ import (
 const (
 	urlSintactico = "https://prevalidador.appsrvr.dev/validacion-sintactica"
 	urlLegacy     = "172.16.170.30:50054"
+	urlDTA        = "172.16.170.30:50057"
 )
 
 type ModuleConfig struct {
@@ -88,7 +89,7 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 		numeroPedFloat := inicioPed["NumeroPed"].(float64)
 		numeroPedStr := strconv.FormatFloat(numeroPedFloat, 'f', 0, 64)
 
-		logf("Consultando NorContribuciones para pedimento %s...", numeroPedStr)
+		logf("Consultando TCambio para pedimento %s...", numeroPedStr)
 		dtaData := map[string]interface{}{}
 		extras, err := grpcclient.ProcessGRPCTCambio(urlLegacy, documento)
 		if err != nil {
@@ -98,16 +99,26 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 				documento["TCambio"] = tcambio
 				dtaData["TCambio"] = tcambio
 			}
-			if dta, ok := extras["DtaPartidas"]; ok {
-				documento["DtaPartidas"] = dta
-				dtaData["DtaPartidas"] = dta
-			}
 			writer.Write(orchestrator.PanelEvent{
 				Type:      orchestrator.EventNorContrib,
 				Pedimento: numeroPedStr,
 				Data:      extras,
 			})
-			logf("[OK] NorContribuciones recibido para pedimento %s", numeroPedStr)
+			logf("[OK] TCambio recibido para pedimento %s", numeroPedStr)
+		}
+
+		logf("Consultando DTA (%s) para pedimento %s...", urlDTA, numeroPedStr)
+		dtaExtras, err := grpcclient.ProcessGRPCDTA(urlDTA, documento)
+		if err != nil {
+			logf("ADVERTENCIA: DTA falló para pedimento %s: %v", numeroPedStr, err)
+		} else {
+			// El módulo DTA define las etiquetas que se agregan al pedimento.
+			// Se copian literalmente, sin traducciones ni renombrados.
+			for etiqueta, valor := range dtaExtras {
+				documento[etiqueta] = valor
+				dtaData[etiqueta] = valor
+			}
+			logf("[OK] DTA recibido para pedimento %s", numeroPedStr)
 		}
 
 		writer.Write(orchestrator.PanelEvent{

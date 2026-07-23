@@ -128,9 +128,46 @@ func ProcessGRPCTCambio(host string, reqData map[string]interface{}) (map[string
 	if tcambio, ok := datosExtra["TCambio"]; ok {
 		extras["TCambio"] = tcambio
 	}
-	if dta, ok := datosExtra["DtaPartidas"]; ok {
-		extras["DtaPartidas"] = dta
-	}
 
 	return extras, nil
+}
+
+// ProcessGRPCDTA envía el pedimento al módulo DTA y devuelve sus DatosExtra
+// sin traducir, filtrar ni renombrar ninguna etiqueta.
+func ProcessGRPCDTA(host string, reqData map[string]interface{}) (map[string]interface{}, error) {
+	reqStruct, err := structpb.NewStruct(reqData)
+	if err != nil {
+		return nil, fmt.Errorf("error serializando request DTA: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("error conectando gRPC DTA: %v", err)
+	}
+	defer conn.Close()
+
+	outStruct := new(structpb.Struct)
+	if err = conn.Invoke(ctx, "/module.dta.DTAService/Validar", reqStruct, outStruct); err != nil {
+		return nil, err
+	}
+
+	resultados, ok := outStruct.AsMap()["Resultado"].([]interface{})
+	if !ok || len(resultados) == 0 {
+		return nil, fmt.Errorf("estructura 'Resultado' no encontrada o vacía")
+	}
+
+	primer, ok := resultados[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("primer elemento de 'Resultado' inválido")
+	}
+
+	datosExtra, ok := primer["DatosExtra"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("'DatosExtra' no encontrado en la respuesta DTA")
+	}
+
+	return datosExtra, nil
 }
