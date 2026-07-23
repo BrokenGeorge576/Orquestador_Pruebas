@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"orquestador_p/internal/grpcclient"
 	"orquestador_p/internal/orchestrator"
@@ -33,9 +35,9 @@ type PedimentoContext struct {
 // Agregar módulos aquí genera automáticamente un panel nuevo en la interfaz web.
 var modulos = []ModuleConfig{
 	{
-		Name:       "Simplificados",
+		Name:       "IVA",
 		Host:       "localhost:50051",
-		MethodName: "/apigrpc.SIMPLIFICADOS/SIMPLIFICADOS",
+		MethodName: "/apigrpc.IvaService/Iva",
 	},
 }
 
@@ -75,6 +77,15 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 		return fmt.Errorf("respuesta de Sintáctica sin Resultado")
 	}
 	logf("[OK] Documento extraído (%d pedimento(s))", len(resultadoArr))
+
+	logf("Consultando NorContribucion (%s)...", urlNorContribucion)
+	dtaPorPedimento, err := grpcclient.ProcessRestNorContribucion(urlNorContribucion, archivo)
+	if err != nil {
+		logf("ADVERTENCIA: NorContribucion falló: %v", err)
+		dtaPorPedimento = make(map[string]grpcclient.DtaPartidas)
+	} else {
+		logf("[OK] NorContribucion recibido (%d pedimentos con DTA)", len(dtaPorPedimento))
+	}
 
 	var pedimentosAProcesar []PedimentoContext
 
@@ -170,7 +181,13 @@ func runOrchestrator(ctx context.Context, archivo string, writer orchestrator.Pa
 			wg.Add(1)
 			go func(m ModuleConfig, doc map[string]interface{}, numPed string) {
 				defer wg.Done()
+				start := time.Now()
 				res, err := grpcclient.ProcessDynamicModule(m.Host, m.MethodName, doc)
+
+				// Reenvía a la Bitácora los logs del lado servidor del contenedor del módulo.
+				// El writer es goroutine-safe, así que se hace fuera del mutex para no
+				// serializar la captura (docker logs) entre módulos paralelos.
+				captureModuleLogs(m, start, writer)
 
 				mu.Lock()
 				defer mu.Unlock()

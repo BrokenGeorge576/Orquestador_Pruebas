@@ -139,11 +139,28 @@
     font-size: 10px; font-weight: 700;
     letter-spacing: 1.5px; text-transform: uppercase;
     color: var(--muted);
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .ph-count {
     font-size: 10px; color: var(--muted);
     background: var(--border); padding: 1px 6px; border-radius: 10px;
+    flex-shrink: 0;
   }
+  .ph-actions { display: flex; align-items: center; gap: 6px; margin-left: 8px; flex-shrink: 0; }
+  .ph-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    width: 22px; height: 18px;
+    padding: 0;
+    font-size: 12px; line-height: 1;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .ph-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .ph-btn-flash { color: var(--accent); border-color: var(--accent); }
   .pb {
     flex: 1; overflow-y: auto;
     font-family: var(--mono); font-size: 11.5px; line-height: 1.55;
@@ -214,6 +231,7 @@
   .ll { color: var(--muted); }
   .ll.ok  { color: var(--accent); }
   .ll.err { color: var(--error); }
+  .ll.mod { color: var(--ped); padding-left: 10px; border-left: 2px solid var(--border); }
 
   /* ── Batch mode ─────────────────────────────── */
   #batch-mode-btn {
@@ -514,10 +532,10 @@
 
   // Paneles fijos
   const fixed = {
-    sint: { body: $('out-sint'), count: $('cnt-sint'), n: 0 },
-    ped:  { body: $('out-ped'),  count: $('cnt-ped'),  n: 0 },
-    nor:  { body: $('out-nor'),  count: $('cnt-nor'),  n: 0 },
-    dta:  { body: $('out-dta'),  count: $('cnt-dta'),  n: 0 },
+    sint: { body: $('out-sint'), count: $('cnt-sint'), n: 0, name: 'Sintactico',        entries: [] },
+    ped:  { body: $('out-ped'),  count: $('cnt-ped'),  n: 0, name: 'Pedimento',          entries: [] },
+    nor:  { body: $('out-nor'),  count: $('cnt-nor'),  n: 0, name: 'NorContribuciones',  entries: [] },
+    dta:  { body: $('out-dta'),  count: $('cnt-dta'),  n: 0, name: 'DTA_TCambio',         entries: [] },
   };
 
   // Paneles dinámicos de módulos: { [moduleName]: { body, count, n } }
@@ -536,19 +554,26 @@
   }
 
   // ── Log ─────────────────────────────────────────
-  function addLog(text) {
-    const isErr = text.startsWith('ERROR');
-    const isOk  = text.startsWith('[OK]');
-    const line  = document.createElement('div');
+  function addLog(text, module) {
+    const line = document.createElement('div');
     let cls = 'll';
-    if (isErr) cls += ' err';
-    else if (isOk) cls += ' ok';
+    if (module) {
+      // Log del lado servidor (contenedor del módulo): estilo distinto, sin
+      // alterar el estado de error del orquestador.
+      cls += ' mod';
+      line.textContent = '[' + new Date().toLocaleTimeString() + '] [' + module + '] ' + text;
+    } else {
+      const isErr = text.startsWith('ERROR');
+      const isOk  = text.startsWith('[OK]');
+      if (isErr) cls += ' err';
+      else if (isOk) cls += ' ok';
+      line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
+      if (isErr) hadError = true;
+    }
     line.className = cls;
-    line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
     $('log-out').appendChild(line);
     $('log-out').scrollTop = $('log-out').scrollHeight;
     $('cnt-log').textContent = ++logN;
-    if (isErr) hadError = true;
   }
 
   function clearLog() {
@@ -567,6 +592,7 @@
     panel.body.innerHTML = '<div class="empty">Sin datos</div>';
     panel.n = 0;
     panel.count.textContent = '0';
+    panel.entries = [];
   }
 
   function rmEmpty(body) {
@@ -590,6 +616,7 @@
     entry.appendChild(pre);
     panel.body.appendChild(entry);
     panel.body.scrollTop = panel.body.scrollHeight;
+    if (panel.entries) panel.entries.push({ pedimento: pedimento || '', data });
     incr(panel);
   }
 
@@ -597,7 +624,70 @@
     panel.body.innerHTML = '';
     panel.n = 0;
     panel.count.textContent = '0';
+    panel.entries = [];
     appendEntry(panel, null, data, false);
+  }
+
+  // ── Exportar respuesta de un panel ───────────────
+  function panelText(panel) {
+    const entries = panel.entries || [];
+    if (entries.length === 0) return '';
+    if (entries.length === 1 && !entries[0].pedimento) {
+      const d = entries[0].data;
+      return typeof d === 'string' ? d : JSON.stringify(d, null, 2);
+    }
+    const out = entries.map(e => e.pedimento ? { pedimento: e.pedimento, data: e.data } : e.data);
+    return JSON.stringify(out, null, 2);
+  }
+
+  function addPanelControls(panel, headerEl) {
+    const actions = document.createElement('div');
+    actions.className = 'ph-actions';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'ph-btn';
+    copyBtn.title = 'Copiar respuesta al portapapeles';
+    copyBtn.textContent = '⧉';
+    copyBtn.addEventListener('click', async () => {
+      const txt = panelText(panel);
+      if (!txt) { flashBtn(copyBtn, '∅'); return; }
+      try {
+        await navigator.clipboard.writeText(txt);
+        flashBtn(copyBtn, '✓');
+      } catch (e) {
+        flashBtn(copyBtn, '✕');
+      }
+    });
+
+    const dlBtn = document.createElement('button');
+    dlBtn.className = 'ph-btn';
+    dlBtn.title = 'Descargar respuesta como JSON';
+    dlBtn.textContent = '⭳';
+    dlBtn.addEventListener('click', () => {
+      const txt = panelText(panel);
+      if (!txt) { flashBtn(dlBtn, '∅'); return; }
+      const safe = (panel.name || 'panel').replace(/[^A-Za-z0-9_-]+/g, '_');
+      const blob = new Blob([txt], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'respuesta_' + safe + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(dlBtn);
+    headerEl.appendChild(actions);
+  }
+
+  function flashBtn(btn, glyph) {
+    const prev = btn.textContent;
+    btn.textContent = glyph;
+    btn.classList.add('ph-btn-flash');
+    setTimeout(() => { btn.textContent = prev; btn.classList.remove('ph-btn-flash'); }, 900);
   }
 
   // ── Módulos dinámicos ────────────────────────────
@@ -632,7 +722,8 @@
     wrap.appendChild(body);
     section.appendChild(wrap);
 
-    modPanels[name] = { body, count, n: 0 };
+    modPanels[name] = { body, count, n: 0, name, entries: [] };
+    addPanelControls(modPanels[name], ph);
   }
 
   function clearModules() {
@@ -641,6 +732,12 @@
     section.innerHTML = '';
     for (const k in modPanels) delete modPanels[k];
   }
+
+  // Botones Copiar/Descargar en los paneles fijos (los dinámicos se cablean al crearse)
+  Object.values(fixed).forEach(panel => {
+    const header = panel.body.closest('.panel').querySelector('.ph');
+    addPanelControls(panel, header);
+  });
 
   // ── Reset completo ───────────────────────────────
   function clearAll() {
@@ -721,8 +818,9 @@
 
     sse.addEventListener('log', e => {
       const ev = JSON.parse(e.data);
-      addLog(ev.data);
-      setStatus(ev.data, hadError ? 'error' : 'running');
+      addLog(ev.data, ev.module);
+      // Los logs del contenedor (ev.module) no actualizan la barra de estado.
+      if (!ev.module) setStatus(ev.data, hadError ? 'error' : 'running');
     });
 
     // Lista de módulos → crear paneles antes de recibir resultados
